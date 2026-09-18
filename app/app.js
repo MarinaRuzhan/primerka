@@ -246,6 +246,7 @@ function cardHTML(p) {
       <div class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[p.icon]}</svg></div>
       <h1>${esc(p.name)}</h1>
       <p class="hook">${esc(p.hook)}</p>
+      ${SIMS[p.id] ? `<button class="btn try" data-go="sim" data-sim="${p.id}">Попробовать профессию</button>` : ""}
       <div class="codes">${codeChips}</div>
       ${p.codeNote ? `<p class="code-note">${esc(p.codeNote)}</p>` : ""}
       ${m}
@@ -313,6 +314,12 @@ function setProgress(total, current) {
 }
 
 function render(dir = "next") {
+  if (view === "sim") {
+    prevBtn.hidden = nextBtn.hidden = true;
+    reactBar.hidden = true;
+    drawSim(dir);
+    return;
+  }
   const inDeck = view === "deck";
   const onSummary = inDeck && index === order.length;
 
@@ -360,6 +367,169 @@ function go(step) {
   render(dir);
 }
 
+
+/* ---------- Симуляция профессии ---------- */
+
+let sim = null;
+const SIM_DELAY = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 700);
+const fmtViews = n => n.toLocaleString("ru-RU");
+
+function startSim(id) {
+  const s = SIMS[id];
+  sim = { s, step: 0, part: 0, anger: s.start.anger, views: s.start.views, sk: {}, log: [], picks: [], busy: false, end: null, cake: false, back: { view, index } };
+  view = "sim";
+  render("next");
+  enterStep();
+}
+
+function applyFx(fx = {}) {
+  sim.anger = Math.max(0, Math.min(100, sim.anger + (fx.anger || 0)));
+  sim.views += fx.views || 0;
+  ["facts", "empathy", "honesty", "stand"].forEach(k => { if (fx[k]) sim.sk[k] = (sim.sk[k] || 0) + fx[k]; });
+}
+
+function pushMessages(msgs, done) {
+  sim.busy = true;
+  let i = 0;
+  const next = () => {
+    if (i >= msgs.length) { sim.busy = false; drawSim(); done && done(); return; }
+    sim.log.push(msgs[i++]);
+    drawSim();
+    setTimeout(next, SIM_DELAY());
+  };
+  next();
+}
+
+function enterStep() {
+  const st = sim.s.steps[sim.step];
+  sim.part = 0;
+  sim.picks = [];
+  pushMessages(st.say);
+}
+
+function nextStep() {
+  sim.step++;
+  sim.views += 1500; // видео смотрят, пока мы действуем
+  if (sim.step < sim.s.steps.length) enterStep();
+  else finishSim();
+}
+
+function simChoose(i) {
+  if (sim.busy) return;
+  const st = sim.s.steps[sim.step];
+  if (st.compose) {
+    const opt = st.parts[sim.part].options[i];
+    applyFx(opt.fx);
+    sim.picks.push(opt);
+    if (sim.part === st.parts.length - 1 && i === 0) sim.cake = true;
+    if (sim.part < st.parts.length - 1) { sim.part++; drawSim(); return; }
+    pushMessages([
+      { post: sim.picks.map(o => o.text).join(" ") },
+      { from: "crowd", text: sim.picks.map(o => o.react).join(" ") }
+    ], nextStep);
+    return;
+  }
+  const ch = st.choices[i];
+  applyFx(ch.fx);
+  pushMessages([{ pick: ch.text }, ...ch.then], nextStep);
+}
+
+function finishSim() {
+  const e = sim.s.endings.find(x => sim.anger <= x.max);
+  sim.end = { title: e.title, text: e.alt && !sim.cake ? e.alt : e.text };
+  state.sims = state.sims || {};
+  state.sims[sim.s.id] = { anger: sim.anger, skills: sim.sk, ending: e.title };
+  save();
+  drawSim("next");
+}
+
+function msgHTML(m) {
+  const P = sim.s.people;
+  if (m.note) return `<li class="note-line">${esc(m.note)}</li>`;
+  if (m.pick) return `<li class="pick"><span>Ты решаешь</span>${esc(m.pick)}</li>`;
+  if (m.me) return `<li class="msg me"><p>${esc(m.me)}</p></li>`;
+  if (m.post) return `<li class="msg me post"><span class="label">Твой ответ под видео</span><p>${esc(m.post)}</p></li>`;
+  if (m.video) return `<li class="video"><div class="screen"><span class="play" aria-hidden="true"></span><p>${esc(m.video.note)}</p></div><b>${esc(m.video.author)}</b><p>${esc(m.video.caption)}</p></li>`;
+  const who = P[m.from];
+  return `<li class="msg"><span class="ava" style="--a:${who.color}" aria-hidden="true">${esc(who.name[0])}</span><div><b>${esc(who.name)}</b>${who.role ? `<small>${esc(who.role)}</small>` : ""}<p>${esc(m.text)}</p></div></li>`;
+}
+
+function simBarHTML() {
+  const st = sim.s.steps[Math.min(sim.step, sim.s.steps.length - 1)];
+  const mood = 100 - sim.anger;
+  return `<div class="sim-bar">
+    <span class="clock">${sim.end ? "Следующий день" : st.time}</span>
+    <span class="views"><span class="play" aria-hidden="true"></span>${fmtViews(sim.views)} просмотров</span>
+    <div class="pole mood" role="img" aria-label="Настроение комментариев: ${mood} из 100">
+      <span class="l ${mood > 60 ? "weak" : ""}">Злятся</span>
+      <span class="track"><b style="left:calc(9px + (100% - 18px) * ${mood / 100})"></b></span>
+      <span class="${mood < 40 ? "weak" : ""}">Поддерживают</span>
+    </div>
+  </div>`;
+}
+
+function choicesHTML() {
+  if (sim.busy) return `<div class="typing" aria-live="polite"><i></i><i></i><i></i></div>`;
+  const st = sim.s.steps[sim.step];
+  if (st.compose) {
+    const part = st.parts[sim.part];
+    const draft = sim.picks.length ? `<div class="draft"><span class="label">Черновик ответа</span><p>${esc(sim.picks.map(o => o.text).join(" "))}</p></div>` : "";
+    return `${draft}<p class="ask">${esc(part.question)}</p>
+      <div class="choices">${part.options.map((o, i) => `<button class="btn choice" data-choice="${i}">${esc(o.text)}</button>`).join("")}</div>`;
+  }
+  return `<p class="ask">${esc(st.question)}</p>
+    <div class="choices">${st.choices.map((c, i) => `<button class="btn choice" data-choice="${i}">${esc(c.text)}</button>`).join("")}</div>`;
+}
+
+function simEndHTML() {
+  const s = sim.s;
+  const shown = s.skills.filter(k => (sim.sk[k.key] || 0) > 0);
+  const skills = shown.map(k => {
+    const v = sim.sk[k.key] || 0;
+    const filled = Math.round((v / k.max) * 5);
+    return `<li><span>${k.name}</span><span class="dots">${Array.from({ length: 5 }, (_, i) => `<i class="${i < filled ? "on" : ""}"></i>`).join("")}</span></li>`;
+  }).join("");
+  const cur = state.reactions[s.profession];
+  const btn = (r, mark, label) => `<button class="btn r-sim" data-simr="${r}" aria-pressed="${cur === r}"><span class="r-mark">${mark}</span>${label}</button>`;
+  return `<div class="sim-end">
+    <h2>${esc(sim.end.title)}</h2>
+    <p>${esc(sim.end.text)}</p>
+    <div class="sim-skills"><span class="label">Что у тебя получилось</span>${shown.length ? `<ul>${skills}</ul>` : `<p class="note">В этот раз навыки не успели проявиться — так бывает в первой попытке. Попробуй пройти ещё раз и выбрать по-другому.</p>`}</div>
+    <p class="note">${esc(s.after)}</p>
+    <p class="ask">Понравилось быть PR-менеджером?</p>
+    <div class="choices row">${btn("yes", "+", "Интересно")}${btn("maybe", "?", "Не знаю")}${btn("no", "−", "Не моё")}</div>
+    <div class="actions">
+      <button class="btn primary" data-go="sim-more">Хочу пробовать другие профессии</button>
+      <button class="btn ghost" data-go="sim-again">Пройти ещё раз</button>
+      <button class="btn ghost" data-go="sim-exit">К карточке профессии</button>
+    </div>
+    <p class="note" id="more-note" hidden>Записали! Скоро здесь появятся другие профессии. Расскажи, какую хочешь попробовать следующей.</p>
+  </div>`;
+}
+
+function drawSim(dir) {
+  const fresh = !slot.querySelector(".sim");
+  if (fresh) {
+    slot.innerHTML = `<article class="panel sim">
+      <p class="count">Примерка профессии</p>
+      <h1>${esc(sim.s.title)}</h1>
+      <p class="lead">${esc(sim.s.role)}. ${esc(sim.s.lead)}</p>
+      <div class="sim-bar-slot"></div>
+      <ol class="chat"></ol>
+      <div class="sim-controls"></div>
+    </article>`;
+    if (dir) slot.firstElementChild.classList.add(dir === "next" ? "enter-next" : "enter-prev");
+  }
+  setProgress(sim.s.steps.length, sim.end ? sim.s.steps.length : sim.step);
+  slot.querySelector(".sim-bar-slot").innerHTML = simBarHTML();
+  const chat = slot.querySelector(".chat");
+  for (let i = chat.children.length; i < sim.log.length; i++) chat.insertAdjacentHTML("beforeend", msgHTML(sim.log[i]));
+  slot.querySelector(".sim-controls").innerHTML = sim.end ? simEndHTML() : choicesHTML();
+  const smooth = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (sim.end) slot.querySelector(".sim-end").scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+  else if (!fresh) window.scrollTo({ top: document.documentElement.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+}
+
 /* ---------- Действия ---------- */
 
 slot.addEventListener("click", e => {
@@ -390,9 +560,32 @@ slot.addEventListener("click", e => {
     return;
   }
 
+  const choice = e.target.closest("[data-choice]");
+  if (choice && view === "sim") { simChoose(Number(choice.dataset.choice)); return; }
+
+  const simR = e.target.closest("[data-simr]");
+  if (simR) {
+    state.reactions[sim.s.profession] = simR.dataset.simr;
+    save();
+    slot.querySelectorAll("[data-simr]").forEach(x => x.setAttribute("aria-pressed", String(x === simR)));
+    return;
+  }
+
   const btn = e.target.closest("[data-go]");
   if (!btn) return;
   switch (btn.dataset.go) {
+    case "sim": startSim(btn.dataset.sim); break;
+    case "sim-again": startSim(sim.s.id); break;
+    case "sim-more":
+      state.wantMore = true; save();
+      slot.querySelector("#more-note").hidden = false;
+      btn.disabled = true;
+      break;
+    case "sim-exit":
+      view = sim.back.view === "sim" ? "deck" : sim.back.view;
+      index = sim.back.index;
+      render("prev");
+      break;
     case "quiz":
       page = Math.min(Math.floor(answeredCount() / PER_PAGE), PAGES - 1);
       show("quiz");
