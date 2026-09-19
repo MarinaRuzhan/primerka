@@ -335,6 +335,7 @@ function render(dir = "next") {
   else if (inDeck) setProgress(order.length, index);
   else progress.innerHTML = "";
 
+  document.body.classList.toggle("in-deck", inDeck && !onSummary);
   prevBtn.hidden = nextBtn.hidden = !inDeck;
   prevBtn.disabled = index === 0;
   nextBtn.disabled = onSummary;
@@ -636,16 +637,51 @@ document.addEventListener("keydown", e => {
   }
 });
 
-// Свайп на телефоне — только среди карточек
-let touchX = null, touchY = null;
-slot.addEventListener("touchstart", e => { touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; }, { passive: true });
-slot.addEventListener("touchend", e => {
-  if (touchX === null || view !== "deck") return;
-  const dx = e.changedTouches[0].clientX - touchX;
-  const dy = e.changedTouches[0].clientY - touchY;
-  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) go(dx < 0 ? 1 : -1);
-  touchX = null;
+// Карусель: карточку можно тянуть пальцем влево-вправо.
+// Вертикальную прокрутку оставляем браузеру (touch-action: pan-y в стилях),
+// горизонтальное движение — наше, поэтому iPhone не перехватывает жест.
+let drag = null;
+slot.addEventListener("pointerdown", e => {
+  if (view !== "deck" || e.pointerType === "mouse" || !slot.firstElementChild) return;
+  drag = { id: e.pointerId, x: e.clientX, y: e.clientY, dx: 0, on: false, el: slot.firstElementChild };
 });
+slot.addEventListener("pointermove", e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.on) {
+    if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { drag = null; return; } // это прокрутка вниз
+    if (Math.abs(dx) < 10) return;
+    drag.on = true;
+    drag.el.classList.remove("enter-next", "enter-prev");
+    drag.el.style.transition = "none";
+    try { slot.setPointerCapture(e.pointerId); } catch {}
+  }
+  drag.dx = dx;
+  drag.el.style.transform = `translateX(${dx}px) rotate(${dx / 40}deg)`;
+});
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const { on, dx, el } = drag;
+  drag = null;
+  if (!on) return;
+  const atEdge = (dx > 0 && index === 0) || (dx < 0 && index === order.length);
+  if (Math.abs(dx) > 70 && !atEdge) {
+    markSwiped();
+    go(dx < 0 ? 1 : -1);
+    return;
+  }
+  el.style.transition = "transform .25s ease-out";
+  el.style.transform = "";
+}
+slot.addEventListener("pointerup", endDrag);
+slot.addEventListener("pointercancel", endDrag);
+
+// Подсказка «листай» — пока человек ни разу не пролистал пальцем
+function markSwiped() {
+  try { localStorage.setItem("primerka-swiped", "1"); } catch {}
+  document.body.classList.add("swiped");
+}
+try { if (localStorage.getItem("primerka-swiped")) document.body.classList.add("swiped"); } catch {}
 
 render();
 
