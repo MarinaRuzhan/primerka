@@ -12,19 +12,31 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script>
+    // Если что-то сломается при запуске — показать причину прямо на экране,
+    // чтобы её можно было сфотографировать.
+    window.addEventListener("error", function (e) {
+      var box = document.getElementById("boot-error") || document.createElement("pre");
+      box.id = "boot-error";
+      box.style.cssText = "white-space:pre-wrap;margin:16px;padding:12px;border:2px solid #121214;border-radius:12px;font:13px/1.4 monospace;background:#fff;color:#121214";
+      box.textContent += "Ошибка: " + e.message + " (" + (e.filename || "").split("/").pop() + ":" + e.lineno + ")\n";
+      (document.body || document.documentElement).appendChild(box);
+    });
+  </script>
 </head>
 <body>
   <main class="stage">
     <header class="top">
       <span class="brand">Примерка профессий</span>
       <div class="progress" id="progress" aria-hidden="true"></div>
+      <p class="swipe-hint" aria-hidden="true">Листай карточки пальцем ← →</p>
     </header>
 
     <div class="deck">
       <button class="nav nav-prev" id="prev" aria-label="Предыдущая профессия">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
-      <section class="slot" id="slot" aria-live="polite"></section>
+      <section class="slot" id="slot" aria-live="polite"><p class="boot">Загружаем…</p></section>
       <button class="nav nav-next" id="next" aria-label="Следующая профессия">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
       </button>
