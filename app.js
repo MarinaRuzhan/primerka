@@ -60,7 +60,6 @@ const progress = document.getElementById("progress");
 const prevBtn = document.getElementById("prev");
 const nextBtn = document.getElementById("next");
 const reactBar = document.getElementById("react");
-const tryBar = document.getElementById("try-bar");
 
 function load() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
@@ -242,7 +241,12 @@ function cardHTML(p) {
   const codeChips = [...p.code].map(t => `<span class="type-chip" style="--t:${TYPES[t].color}">${TYPES[t].name}</span>`).join("");
   const m = quizDone() ? `<p class="match">Совпадение с твоими интересами: <b>${matchLabel(match(p, scores()))}</b></p>` : "";
 
+  const sim = SIMS[p.id];
   return `<article class="card" style="--c:${color}">
+    ${sim ? `<button class="btn try" data-go="sim" data-sim="${p.id}">
+      <span class="try-play" aria-hidden="true"></span>
+      <span><b>Попробовать</b><small>история на 5 минут</small></span>
+    </button>` : ""}
     <div class="card-head">
       <div class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[p.icon]}</svg></div>
       <h1>${esc(p.name)}</h1>
@@ -317,7 +321,6 @@ function render(dir = "next") {
   if (view === "sim") {
     prevBtn.hidden = nextBtn.hidden = true;
     reactBar.hidden = true;
-    tryBar.hidden = true;
     drawSim(dir);
     return;
   }
@@ -341,14 +344,6 @@ function render(dir = "next") {
   prevBtn.disabled = index === 0;
   nextBtn.disabled = onSummary;
   reactBar.hidden = !inDeck || onSummary;
-  const simHere = inDeck && !onSummary && SIMS[order[index].id];
-  tryBar.hidden = !simHere;
-  if (simHere) {
-    tryBar.innerHTML = `<button class="btn try" data-go="sim" data-sim="${order[index].id}">
-      <span class="try-play" aria-hidden="true"></span>
-      <span><b>Попробовать профессию</b><small>«${esc(simHere.title)}» — история на 5 минут</small></span>
-    </button>`;
-  }
   if (inDeck && !onSummary) {
     const current = state.reactions[order[index].id];
     reactBar.querySelectorAll(".r").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.r === current)));
