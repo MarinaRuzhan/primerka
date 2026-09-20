@@ -92,6 +92,7 @@ const SIM_PR = {
     {
       time: "10:05",
       compose: true,
+      reactFrom: "crowd",
       say: [
         { from: "olga", text: "Нужен ответ под видео. Его прочитают все. Собери его — я тебе доверяю." }
       ],
