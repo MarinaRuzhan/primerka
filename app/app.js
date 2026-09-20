@@ -377,8 +377,9 @@ const fmtViews = n => n.toLocaleString("ru-RU");
 
 function startSim(id) {
   const s = SIMS[id];
-  sim = { s, step: 0, part: 0, anger: s.start.anger, views: s.start.views, sk: {}, log: [], picks: [], busy: false, end: null, cake: false, back: { view, index } };
+  sim = { s, step: 0, part: 0, anger: s.start.anger, views: s.start.views, sk: {}, log: [], picks: [], done: [], clock: s.steps[0].time, busy: false, end: null, cake: false, back: { view, index } };
   view = "sim";
+  slot.innerHTML = ""; // начисто: в чате не должно остаться реплик прошлой истории
   render("next");
   enterStep();
 }
@@ -405,12 +406,14 @@ function enterStep() {
   const st = sim.s.steps[sim.step];
   sim.part = 0;
   sim.picks = [];
+  sim.clock = st.time;
+  sim.done = [];
   pushMessages(st.say);
 }
 
 function nextStep() {
   sim.step++;
-  sim.views += 1500; // видео смотрят, пока мы действуем
+  sim.views += sim.s.counter ? (sim.s.counter.drift || 0) : 0; // счётчик живёт сам по себе
   if (sim.step < sim.s.steps.length) enterStep();
   else finishSim();
 }
@@ -418,6 +421,16 @@ function nextStep() {
 function simChoose(i) {
   if (sim.busy) return;
   const st = sim.s.steps[sim.step];
+  if (st.explore) {
+    const act = st.actions[i];
+    if (sim.done.includes(i)) return;
+    sim.done.push(i);
+    applyFx(act.fx);
+    pushMessages([{ pick: act.text }, ...act.reveal], () => {
+      if (sim.done.length >= st.need) { sim.busy = false; drawSim(); }
+    });
+    return;
+  }
   if (st.compose) {
     const opt = st.parts[sim.part].options[i];
     applyFx(opt.fx);
@@ -425,7 +438,7 @@ function simChoose(i) {
     if (sim.part === st.parts.length - 1 && i === 0) sim.cake = true;
     if (sim.part < st.parts.length - 1) { sim.part++; drawSim(); return; }
     pushMessages([
-      { post: sim.picks.map(o => o.text).join(" ") },
+      { post: sim.picks.map(o => o.text).join(" "), postLabel: st.postLabel },
       { from: "crowd", text: sim.picks.map(o => o.react).join(" ") }
     ], nextStep);
     return;
@@ -446,25 +459,33 @@ function finishSim() {
 
 function msgHTML(m) {
   const P = sim.s.people;
+  const t = `<time>${esc(sim.clock || "")}</time>`;
   if (m.note) return `<li class="note-line">${esc(m.note)}</li>`;
+  if (m.scene) return `<li class="scene"><span class="label">${esc(m.scene.where)}</span><p>${esc(m.scene.text)}</p></li>`;
   if (m.pick) return `<li class="pick"><span>Ты решаешь</span>${esc(m.pick)}</li>`;
-  if (m.me) return `<li class="msg me"><p>${esc(m.me)}</p></li>`;
-  if (m.post) return `<li class="msg me post"><span class="label">Твой ответ под видео</span><p>${esc(m.post)}</p></li>`;
+  if (m.photo) return `<li class="shot"><div class="frame">${esc(m.photo.what)}</div><p>${esc(m.photo.caption)}</p></li>`;
+  if (m.doc) return `<li class="doc"><span class="label">${esc(m.doc.title)}</span><p>${esc(m.doc.text)}</p></li>`;
+  if (m.me) return `<li class="msg me"><p>${esc(m.me)}</p>${t}<span class="ticks" aria-hidden="true">✓✓</span></li>`;
+  if (m.post) return `<li class="msg me post"><span class="label">${esc(m.postLabel || "Твой ответ под видео")}</span><p>${esc(m.post)}</p>${t}<span class="ticks" aria-hidden="true">✓✓</span></li>`;
   if (m.video) return `<li class="video"><div class="screen"><span class="play" aria-hidden="true"></span><p>${esc(m.video.note)}</p></div><b>${esc(m.video.author)}</b><p>${esc(m.video.caption)}</p></li>`;
   const who = P[m.from];
-  return `<li class="msg"><span class="ava" style="--a:${who.color}" aria-hidden="true">${esc(who.name[0])}</span><div><b>${esc(who.name)}</b>${who.role ? `<small>${esc(who.role)}</small>` : ""}<p>${esc(m.text)}</p></div></li>`;
+  return `<li class="msg"><span class="ava" style="--a:${who.color}" aria-hidden="true">${esc(who.name[0])}</span><div><b>${esc(who.name)}</b>${who.role ? `<small>${esc(who.role)}</small>` : ""}<p>${esc(m.text)}</p>${t}</div></li>`;
 }
 
 function simBarHTML() {
-  const st = sim.s.steps[Math.min(sim.step, sim.s.steps.length - 1)];
+  const s = sim.s;
+  const st = s.steps[Math.min(sim.step, s.steps.length - 1)];
   const mood = 100 - sim.anger;
-  return `<div class="sim-bar">
-    <span class="clock">${sim.end ? "Следующий день" : st.time}</span>
-    <span class="views"><span class="play" aria-hidden="true"></span>${fmtViews(sim.views)} просмотров</span>
-    <div class="pole mood" role="img" aria-label="Настроение комментариев: ${mood} из 100">
-      <span class="l ${mood > 60 ? "weak" : ""}">Злятся</span>
+  const counter = s.counter
+    ? `<span class="views">${s.counter.icon === false ? "" : `<span class="play" aria-hidden="true"></span>`}${fmtViews(sim.views)} ${esc(s.counter.word)}</span>`
+    : "";
+  return `<div class="sim-bar${counter ? "" : " no-counter"}">
+    <span class="clock">${sim.end ? esc(s.endClock || "Следующий день") : st.time}</span>
+    ${counter}
+    <div class="pole mood" role="img" aria-label="${esc(s.meter.right)}: ${mood} из 100">
+      <span class="l ${mood > 60 ? "weak" : ""}">${esc(s.meter.left)}</span>
       <span class="track"><b style="left:calc(9px + (100% - 18px) * ${mood / 100})"></b></span>
-      <span class="${mood < 40 ? "weak" : ""}">Поддерживают</span>
+      <span class="${mood < 40 ? "weak" : ""}">${esc(s.meter.right)}</span>
     </div>
   </div>`;
 }
@@ -472,6 +493,13 @@ function simBarHTML() {
 function choicesHTML() {
   if (sim.busy) return `<div class="typing" aria-live="polite"><i></i><i></i><i></i></div>`;
   const st = sim.s.steps[sim.step];
+  if (st.explore) {
+    const left = st.need - sim.done.length;
+    return `<p class="ask">${esc(st.question)}</p>
+      <p class="need">${left > 0 ? `Выбери ещё ${left}` : "Хватит — можно идти дальше"}</p>
+      <div class="choices">${st.actions.map((act, i) => `<button class="btn choice" data-choice="${i}" ${sim.done.includes(i) ? "disabled" : ""}>${esc(act.text)}</button>`).join("")}
+      ${left > 0 ? "" : `<button class="btn primary" data-go="sim-next">${esc(st.nextLabel || "Дальше")}</button>`}</div>`;
+  }
   if (st.compose) {
     const part = st.parts[sim.part];
     const draft = sim.picks.length ? `<div class="draft"><span class="label">Черновик ответа</span><p>${esc(sim.picks.map(o => o.text).join(" "))}</p></div>` : "";
@@ -497,7 +525,8 @@ function simEndHTML() {
     <p>${esc(sim.end.text)}</p>
     <div class="sim-skills"><span class="label">Что у тебя получилось</span>${shown.length ? `<ul>${skills}</ul>` : `<p class="note">В этот раз навыки не успели проявиться — так бывает в первой попытке. Попробуй пройти ещё раз и выбрать по-другому.</p>`}</div>
     <p class="note">${esc(s.after)}</p>
-    <p class="ask">Понравилось быть PR-менеджером?</p>
+    ${s.tryNow ? `<div class="try-now"><span class="label">Попробуй уже сейчас</span><ul>${s.tryNow.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>` : ""}
+    <p class="ask">Понравилось быть ${esc(s.askAs || "на этом месте")}?</p>
     <div class="choices row">${btn("yes", "+", "Интересно")}${btn("maybe", "?", "Не знаю")}${btn("no", "−", "Не моё")}</div>
     <div class="actions">
       <button class="btn primary" data-go="sim-more">Хочу пробовать другие профессии</button>
@@ -576,6 +605,7 @@ slot.addEventListener("click", e => {
   if (!btn) return;
   switch (btn.dataset.go) {
     case "sim": startSim(btn.dataset.sim); break;
+    case "sim-next": nextStep(); break;
     case "sim-again": startSim(sim.s.id); break;
     case "sim-more":
       state.wantMore = true; save();

@@ -447,3 +447,16 @@ body { overflow-x: clip; }
   }
 }
 .boot { margin: 40px 0; text-align: center; font-weight: 600; opacity: .6; }
+.msg time { display: block; margin-top: 4px; font-size: 11px; opacity: .45; }
+.msg.me { position: relative; padding-bottom: 18px; }
+.msg.me time { position: absolute; right: 30px; bottom: 5px; margin: 0; opacity: .6; }
+.ticks { position: absolute; right: 12px; bottom: 4px; font-size: 11px; opacity: .6; }
+.scene, .doc { background: var(--bg); border-radius: 18px; padding: 12px 16px; max-width: 88%; }
+.scene p, .doc p { margin: 6px 0 0; font-size: 16px; line-height: 1.4; }
+.shot { max-width: 88%; }
+.shot .frame { background: #121214; color: #F1F0EC; border-radius: 12px; padding: 22px 18px; font-size: 15px; line-height: 1.4; }
+.shot p { margin: 6px 0 0; font-size: 14px; opacity: .7; }
+.try-now { background: var(--bg); border-radius: 22px; padding: 16px 18px; }
+.try-now ul { margin: 10px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+.try-now li { font-size: 16px; line-height: 1.4; }
+.sim-bar.no-counter { grid-template-columns: auto 1fr; }
