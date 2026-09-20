@@ -491,7 +491,23 @@ body { overflow-x: clip; }
 }
 @media (prefers-reduced-motion: reduce) { .btn.try { animation: none; } }
 @media (max-width: 640px) {
-  .btn.try { top: 16px; right: 16px; padding: 6px 14px 6px 8px; min-height: 50px; }
-  .btn.try b { font-size: 15px; }
-  .card-head h1 { padding-right: 0; }
+  .btn.try {
+    top: 14px; right: 14px; padding: 8px 12px 8px 8px; min-height: 52px;
+    max-width: 56%; gap: 8px;
+  }
+  .btn.try b { font-size: 14px; line-height: 1.15; }
+  .btn.try small { font-size: 11px; }
+  .try-play { width: 28px; height: 28px; }
+  .try-play::after { border-left-width: 10px; border-top-width: 7px; border-bottom-width: 7px; }
+}
+
+/* Компьютер: кнопка пробника — своей строкой, карточки одной высоты */
+@media (min-width: 1000px) {
+  .card {
+    grid-template-areas: "try try" "head pair" "scales fit" "scales school" "more more";
+    grid-template-rows: auto auto auto 1fr auto;
+    min-height: 820px;
+  }
+  .btn.try { position: static; grid-area: try; justify-self: end; margin-bottom: -4px; }
+  .more { align-self: end; }
 }

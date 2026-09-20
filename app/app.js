@@ -207,8 +207,8 @@ function resultHTML() {
     ${low}
     <div class="type-cards">${cards}</div>
     <div class="actions">
-      <button class="btn primary" data-go="deck-match">Смотреть ${TOP_N} подходящих профессий</button>
-      <button class="btn ghost" data-go="restart">Пройти заново</button>
+      <button class="btn primary" data-go="deck-match">Показать подходящие профессии</button>
+      <button class="btn ghost" data-go="restart">Пройти опрос заново</button>
     </div>
     <p class="attrib">Вопросы составлены по мотивам O*NET Mini Interest Profiler и адаптированы для подростков. ${esc(ATTRIBUTION)}</p>
   </article>`;
@@ -245,7 +245,7 @@ function cardHTML(p) {
   return `<article class="card" style="--c:${color}">
     ${sim ? `<button class="btn try" data-go="sim" data-sim="${p.id}">
       <span class="try-play" aria-hidden="true"></span>
-      <span><b>Попробовать</b><small>история на 5 минут</small></span>
+      <span><b>Попробовать профессию</b><small>история на 5 минут</small></span>
     </button>` : ""}
     <div class="card-head">
       <div class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[p.icon]}</svg></div>
@@ -303,9 +303,9 @@ function summaryHTML() {
     ${group("no", "Не моё")}
     ${skipped.length ? `<div class="group"><h2>Пропущено</h2><ul>${skipped.map(chip).join("")}</ul></div>` : ""}
     <div class="actions">
-      <button class="btn ghost" data-go="deck-restart">Посмотреть эти ещё раз</button>
+      <button class="btn ghost" data-go="deck-restart">Посмотреть профессии ещё раз</button>
       ${order.length < PROFESSIONS.length ? `<button class="btn ghost" data-go="deck-all">Все профессии (${PROFESSIONS.length})</button>` : ""}
-      ${quizDone() ? `<button class="btn ghost" data-go="result">Мой результат</button>` : `<button class="btn primary" data-go="quiz">Пройти вопросы</button>`}
+      ${quizDone() ? `<button class="btn ghost" data-go="result">Мой результат</button>` : `<button class="btn primary" data-go="quiz">Пройти опрос</button>`}
     </div>
   </article>`;
 }
@@ -534,9 +534,9 @@ function simEndHTML() {
     <p class="ask">Понравилось быть ${esc(s.askAs || "на этом месте")}?</p>
     <div class="choices row">${btn("yes", "+", "Интересно")}${btn("maybe", "?", "Не знаю")}${btn("no", "−", "Не моё")}</div>
     <div class="actions">
-      <button class="btn primary" data-go="sim-more">Хочу пробовать другие профессии</button>
-      <button class="btn ghost" data-go="sim-again">Пройти ещё раз</button>
-      <button class="btn ghost" data-go="sim-exit">К карточке профессии</button>
+      <button class="btn primary" data-go="sim-more">Попробовать другую профессию</button>
+      <button class="btn ghost" data-go="sim-again">Попробовать ещё раз</button>
+      <button class="btn ghost" data-go="sim-exit">Вернуться к карточке</button>
     </div>
     <p class="note" id="more-note" hidden>Записали! Скоро здесь появятся другие профессии. Расскажи, какую хочешь попробовать следующей.</p>
   </div>`;
@@ -546,7 +546,7 @@ function drawSim(dir) {
   const fresh = !slot.querySelector(".sim");
   if (fresh) {
     slot.innerHTML = `<article class="panel sim">
-      <p class="count">Примерка профессии</p>
+      <p class="count">Пробник профессии</p>
       <h1>${esc(sim.s.title)}</h1>
       <p class="lead">${esc(sim.s.role)}. ${esc(sim.s.lead)}</p>
       ${sim.s.art ? `<div class="poster">${sim.s.art}</div>` : ""}
