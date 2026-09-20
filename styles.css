@@ -461,7 +461,7 @@ body { overflow-x: clip; }
 .try-now li { font-size: 16px; line-height: 1.4; }
 .sim-bar.no-counter { grid-template-columns: auto 1fr; }
 
-.poster { border-radius: 22px; overflow: hidden; line-height: 0; }
+.poster { max-width: 430px; line-height: 0; }
 .poster svg { width: 100%; height: auto; display: block; }
 
 /* «Попробовать профессию» — в правом верхнем углу карточки, с пульсацией */
