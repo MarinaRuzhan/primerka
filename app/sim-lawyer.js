@@ -5,6 +5,26 @@ const SIM_LAWYER = {
   title: "Договор с ловушкой",
   role: "Юрист, помогаешь художнице",
   lead: "Одно слово в договоре может стоить человеку всего, что он нарисует за следующие три года.",
+  art: `<svg viewBox="0 0 360 124" role="img" aria-label="Три кадра: договор под лупой, найденная ловушка в тексте, кот в галстуке и новое соглашение">
+    <g fill="none" stroke="#121214" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="1.5" y="1.5" width="110" height="121" rx="18" fill="#F1F0EC"/>
+      <path d="M34 14h46v84H34z"/>
+      <path d="M42 30h30M42 42h30M42 54h22"/>
+      <circle cx="66" cy="74" r="16"/><path d="M78 86l10 10"/>
+      <rect x="125.5" y="1.5" width="110" height="121" rx="18" fill="#121214"/>
+      <path d="M150 14h56v96h-56z" stroke="#F1F0EC"/>
+      <path d="M158 30h40M158 42h40M158 66h40M158 78h28" stroke="#F1F0EC"/>
+      <rect x="154" y="48" width="48" height="12" rx="4" fill="#F0442C" stroke="none"/>
+      <path d="M212 54h14" stroke="#F0442C" stroke-width="4"/>
+      <rect x="249.5" y="1.5" width="110" height="121" rx="18" fill="#F1F0EC"/>
+      <circle cx="292" cy="44" r="20"/>
+      <path d="M276 32 L274 16 L289 26M308 32 L310 16 L295 26"/>
+      <path d="M284 44q5-6 10 0M298 44q5-6 10 0"/>
+      <path d="M286 64h12l-3 5h-6z" fill="#F0442C" stroke="none"/>
+      <path d="M292 69l-5 9 5 10 5-10z" fill="#F0442C" stroke="none"/>
+      <path d="M266 96h52M272 88c6-6 10 4 16-2s10 4 16-2" stroke="#F0442C"/>
+    </g>
+  </svg>`,
   askAs: "юристом",
   start: { anger: 60, views: 0 },
   meter: { left: "Позиция слабая", right: "Позиция сильная" },

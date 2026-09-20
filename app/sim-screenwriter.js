@@ -5,6 +5,25 @@ const SIM_SCREENWRITER = {
   title: "Финал, который не работает",
   role: "Сценарист сериала «Девятый «Б»",
   lead: "У тебя есть герои, есть серия — и полдня, чтобы придумать финал, от которого невозможно оторваться.",
+  art: `<svg viewBox="0 0 360 124" role="img" aria-label="Три кадра: сценарий с зачёркнутым финалом, сообщение в телефоне, сериал обсуждают">
+    <g fill="none" stroke="#121214" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="1.5" y="1.5" width="110" height="121" rx="18" fill="#F1F0EC"/>
+      <path d="M34 16h44v92H34z"/>
+      <path d="M42 32h28M42 44h28M42 56h20"/>
+      <path d="M40 72l32 28M72 72l-32 28" stroke="#FF6B96" stroke-width="4"/>
+      <rect x="125.5" y="1.5" width="110" height="121" rx="18" fill="#121214"/>
+      <rect x="150" y="14" width="62" height="96" rx="10" stroke="#F1F0EC"/>
+      <path d="M160 44h42a6 6 0 0 1 6 6v18a6 6 0 0 1-6 6h-24l-10 8v-8h-8a6 6 0 0 1-6-6V50a6 6 0 0 1 6-6z" stroke="#FF6B96"/>
+      <circle cx="172" cy="59" r="2.5" fill="#FF6B96" stroke="none"/>
+      <circle cx="181" cy="59" r="2.5" fill="#FF6B96" stroke="none"/>
+      <circle cx="190" cy="59" r="2.5" fill="#FF6B96" stroke="none"/>
+      <rect x="249.5" y="1.5" width="110" height="121" rx="18" fill="#F1F0EC"/>
+      <rect x="268" y="28" width="74" height="52" rx="8"/>
+      <path d="M292 92h26M305 80v12"/>
+      <path d="M288 50c4-6 12-2 8 5-2 4-8 8-8 8s-6-4-8-8c-4-7 4-11 8-5z" fill="#FF6B96" stroke="none"/>
+      <path d="M318 44c3-5 10-2 6 4-1 3-6 6-6 6s-5-3-6-6c-3-6 3-9 6-4z" fill="#FF6B96" stroke="none"/>
+    </g>
+  </svg>`,
   askAs: "сценаристом",
   start: { anger: 55, views: 0 },
   meter: { left: "Зрителю скучно", right: "Не оторваться" },
