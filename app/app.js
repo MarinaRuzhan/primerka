@@ -60,6 +60,7 @@ const progress = document.getElementById("progress");
 const prevBtn = document.getElementById("prev");
 const nextBtn = document.getElementById("next");
 const reactBar = document.getElementById("react");
+const tryBar = document.getElementById("try-bar");
 
 function load() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
@@ -246,7 +247,6 @@ function cardHTML(p) {
       <div class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[p.icon]}</svg></div>
       <h1>${esc(p.name)}</h1>
       <p class="hook">${esc(p.hook)}</p>
-      ${SIMS[p.id] ? `<button class="btn try" data-go="sim" data-sim="${p.id}">Попробовать профессию</button>` : ""}
       <div class="codes">${codeChips}</div>
       ${p.codeNote ? `<p class="code-note">${esc(p.codeNote)}</p>` : ""}
       ${m}
@@ -317,6 +317,7 @@ function render(dir = "next") {
   if (view === "sim") {
     prevBtn.hidden = nextBtn.hidden = true;
     reactBar.hidden = true;
+    tryBar.hidden = true;
     drawSim(dir);
     return;
   }
@@ -340,6 +341,14 @@ function render(dir = "next") {
   prevBtn.disabled = index === 0;
   nextBtn.disabled = onSummary;
   reactBar.hidden = !inDeck || onSummary;
+  const simHere = inDeck && !onSummary && SIMS[order[index].id];
+  tryBar.hidden = !simHere;
+  if (simHere) {
+    tryBar.innerHTML = `<button class="btn try" data-go="sim" data-sim="${order[index].id}">
+      <span class="try-play" aria-hidden="true"></span>
+      <span><b>Попробовать профессию</b><small>«${esc(simHere.title)}» — история на 5 минут</small></span>
+    </button>`;
+  }
   if (inDeck && !onSummary) {
     const current = state.reactions[order[index].id];
     reactBar.querySelectorAll(".r").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.r === current)));
@@ -545,6 +554,7 @@ function drawSim(dir) {
       <p class="count">Примерка профессии</p>
       <h1>${esc(sim.s.title)}</h1>
       <p class="lead">${esc(sim.s.role)}. ${esc(sim.s.lead)}</p>
+      ${sim.s.art ? `<div class="poster">${sim.s.art}</div>` : ""}
       <div class="sim-bar-slot"></div>
       <ol class="chat"></ol>
       <div class="sim-controls"></div>

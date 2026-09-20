@@ -5,6 +5,20 @@ const SIM_VET = {
   title: "Бублик не ест",
   role: "Ветеринар клиники «Лапа»",
   lead: "Кот не может рассказать, где болит. Придётся догадаться самому.",
+  art: `<svg viewBox="0 0 400 225" role="img" aria-label="Рыжий кот сидит, внутри силуэта видна длинная лента">
+    <rect width="400" height="225" fill="#121214"/>
+    <circle cx="326" cy="52" r="70" fill="#1d1d21"/>
+    <ellipse cx="200" cy="168" rx="62" ry="48" fill="#FFA04D"/>
+    <path d="M262 186c26 4 40-6 46-22" stroke="#FFA04D" stroke-width="13" stroke-linecap="round" fill="none"/>
+    <circle cx="200" cy="104" r="42" fill="#FFA04D"/>
+    <path d="M166 80 L163 44 L192 68 Z" fill="#FFA04D"/>
+    <path d="M234 80 L237 44 L208 68 Z" fill="#FFA04D"/>
+    <path d="M182 104q6 7 12 0M206 104q6 7 12 0" stroke="#121214" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M200 116l-7 7h14z" fill="#121214"/>
+    <path d="M168 176c14-16 24 10 38-4s20 10 34-6" stroke="#35E0A0" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <circle cx="86" cy="96" r="30" fill="none" stroke="#F1F0EC" stroke-width="6"/>
+    <path d="M108 118l22 22" stroke="#F1F0EC" stroke-width="6" stroke-linecap="round"/>
+  </svg>`,
   askAs: "ветеринаром",
   start: { anger: 55, views: 0 },
   meter: { left: "Коту плохо", right: "Коту лучше" },
