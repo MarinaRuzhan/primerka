@@ -183,6 +183,27 @@ const SIM_PR = {
     { key: "honesty", name: "Говорить честно", max: 4 },
     { key: "stand", name: "Отстоять своё мнение", max: 2 }
   ],
+  art: `<svg viewBox="0 0 360 124" role="img" aria-label="Три кадра: торт с надписью «Миша», видео набирает просмотры, торт с правильной надписью">
+    <g fill="none" stroke="#121214" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="1.5" y="1.5" width="110" height="121" rx="18" fill="#F1F0EC"/>
+      <path d="M32 96h48v-22H32z" fill="#F0442C"/>
+      <path d="M38 74h36v-10H38z" fill="#F1F0EC"/>
+      <path d="M56 64v-9"/><circle cx="56" cy="50" r="4" fill="#F0442C" stroke="none"/>
+      <text x="56" y="90" font-size="11" font-weight="700" fill="#121214" text-anchor="middle" stroke="none" font-family="Golos Text, sans-serif">Миша</text>
+      <rect x="125.5" y="1.5" width="110" height="121" rx="18" fill="#121214"/>
+      <rect x="155" y="16" width="52" height="92" rx="10" stroke="#F1F0EC"/>
+      <path d="M166 84l12-16 10 10 12-22" stroke="#F0442C" stroke-width="4"/>
+      <path d="M198 56v-4h-4" stroke="#F0442C" stroke-width="4"/>
+      <text x="181" y="40" font-size="12" font-weight="700" fill="#F1F0EC" text-anchor="middle" stroke="none" font-family="Golos Text, sans-serif">10 000</text>
+      <path d="M215 44c6 6 6 16 0 22M222 36c10 12 10 28 0 40" stroke="#F1F0EC"/>
+      <rect x="249.5" y="1.5" width="110" height="121" rx="18" fill="#F1F0EC"/>
+      <path d="M280 96h48v-22h-48z" fill="#F0442C"/>
+      <path d="M286 74h36v-10h-36z" fill="#F1F0EC"/>
+      <path d="M304 64v-9"/><circle cx="304" cy="50" r="4" fill="#F0442C" stroke="none"/>
+      <text x="304" y="90" font-size="11" font-weight="700" fill="#121214" text-anchor="middle" stroke="none" font-family="Golos Text, sans-serif">Маша</text>
+      <path d="M334 46c4-6 12-2 8 5-2 4-8 8-8 8s-6-4-8-8c-4-7 4-11 8-5z" fill="#F0442C" stroke="none"/>
+    </g>
+  </svg>`,
   askAs: "PR-менеджером",
   tryNow: [
     "Заведи и веди соцсеть школьного клуба, команды или своего проекта: сам решай, что и как писать.",

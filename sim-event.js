@@ -5,6 +5,28 @@ const SIM_EVENT = {
   title: "Выпускной под дождём",
   role: "Организатор выпускного в парке",
   lead: "Сто восемьдесят человек, открытая площадка и туча, которая идёт прямо на вас.",
+  art: `<svg viewBox="0 0 360 124" role="img" aria-label="Три кадра: праздник под тучей, шатёр под дождём, сцена и конфетти">
+    <g fill="none" stroke="#121214" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="1.5" y="1.5" width="110" height="121" rx="18" fill="#F1F0EC"/>
+      <path d="M26 70c12-14 28-14 30 0s18 14 30 0"/>
+      <circle cx="36" cy="68" r="4" fill="#F0442C" stroke="none"/>
+      <circle cx="56" cy="74" r="4" fill="#F0442C" stroke="none"/>
+      <circle cx="76" cy="68" r="4" fill="#F0442C" stroke="none"/>
+      <path d="M40 34a12 12 0 0 1 24-4 10 10 0 0 1 4 19H42a10 10 0 0 1-2-15z"/>
+      <path d="M44 58l-4 8M58 58l-4 8M72 58l-4 8" stroke="#F0442C" stroke-width="3"/>
+      <rect x="125.5" y="1.5" width="110" height="121" rx="18" fill="#121214"/>
+      <path d="M150 84l31-44 31 44z" stroke="#F1F0EC"/>
+      <path d="M150 84h62M160 84v18M202 84v18" stroke="#F1F0EC"/>
+      <path d="M156 28l-5 12M176 22l-5 12M196 26l-5 12M214 32l-5 12" stroke="#F0442C" stroke-width="3.5"/>
+      <rect x="249.5" y="1.5" width="110" height="121" rx="18" fill="#F1F0EC"/>
+      <path d="M282 56v30M276 92h12"/>
+      <rect x="274" y="30" width="16" height="26" rx="8"/>
+      <path d="M266 100h78"/>
+      <rect x="312" y="28" width="9" height="9" rx="2" fill="#F0442C" stroke="none" transform="rotate(20 316 32)"/>
+      <rect x="330" y="46" width="9" height="9" rx="2" fill="#F0442C" stroke="none" transform="rotate(-15 334 50)"/>
+      <rect x="318" y="64" width="9" height="9" rx="2" fill="#F0442C" stroke="none" transform="rotate(35 322 68)"/>
+    </g>
+  </svg>`,
   askAs: "организатором мероприятий",
   start: { anger: 55, views: 180 },
   meter: { left: "Праздник под угрозой", right: "Всё идёт как надо" },
