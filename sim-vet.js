@@ -94,6 +94,7 @@ const SIM_VET = {
     {
       time: "11:10",
       compose: true,
+      reactFrom: "anya",
       postLabel: "Что ты говоришь хозяйке",
       say: [
         { from: "anya", text: "Операция?! Он же такой маленький. А может, само выйдет? И сколько это будет стоить…" }

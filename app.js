@@ -437,9 +437,10 @@ function simChoose(i) {
     sim.picks.push(opt);
     if (sim.part === st.parts.length - 1 && i === 0) sim.cake = true;
     if (sim.part < st.parts.length - 1) { sim.part++; drawSim(); return; }
+    const reactions = sim.picks.map(o => o.react).join(" ");
     pushMessages([
       { post: sim.picks.map(o => o.text).join(" "), postLabel: st.postLabel },
-      { from: "crowd", text: sim.picks.map(o => o.react).join(" ") }
+      st.reactFrom ? { from: st.reactFrom, text: reactions } : { note: reactions }
     ], nextStep);
     return;
   }
@@ -468,7 +469,7 @@ function msgHTML(m) {
   if (m.me) return `<li class="msg me"><p>${esc(m.me)}</p>${t}<span class="ticks" aria-hidden="true">✓✓</span></li>`;
   if (m.post) return `<li class="msg me post"><span class="label">${esc(m.postLabel || "Твой ответ под видео")}</span><p>${esc(m.post)}</p>${t}<span class="ticks" aria-hidden="true">✓✓</span></li>`;
   if (m.video) return `<li class="video"><div class="screen"><span class="play" aria-hidden="true"></span><p>${esc(m.video.note)}</p></div><b>${esc(m.video.author)}</b><p>${esc(m.video.caption)}</p></li>`;
-  const who = P[m.from];
+  const who = P[m.from] || { name: m.from || "…", role: "", color: "#7B96FF" };
   return `<li class="msg"><span class="ava" style="--a:${who.color}" aria-hidden="true">${esc(who.name[0])}</span><div><b>${esc(who.name)}</b>${who.role ? `<small>${esc(who.role)}</small>` : ""}<p>${esc(m.text)}</p>${t}</div></li>`;
 }
 
