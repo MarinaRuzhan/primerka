@@ -594,6 +594,12 @@ function dayOpen(n) {
   const prev = dayDone(n - 1);
   return Boolean(prev && prev.date < today());
 }
+// «Уверенный ход»: сильный вариант и причина профи. Наугад — 1 шанс из 9.
+// Навык «даётся легко», когда таких ходов по нему 3+ в разных профессиях (пока копим данные).
+const strongMove = n => {
+  const r = dayDone(n), d = PATH_DAYS[n];
+  return Boolean(r && d.options[r.pick].pts === 10 && r.reason === d.reasonOk);
+};
 const daysDone = () => PATH_DAYS.filter((_, n) => dayDone(n)).length;
 const profColor = id => TYPES[PROFESSIONS.find(p => p.id === id).code[0]].color;
 
@@ -649,6 +655,14 @@ function dayHTML(n) {
       <p class="ask">${esc(d.ask)}</p><div class="choices">${opts}</div></article>`;
   }
   const o = d.options[r.pick];
+  if (r.reason === undefined) {
+    const rs = d.reasons.map((x, i) => `<button class="btn choice" data-go="path-reason" data-i="${i}">${esc(x)}</button>`).join("");
+    return `<article class="panel day" style="--c:${profColor(d.profession)}">${head}
+      <div class="picked"><span>Твой выбор</span><p>${esc(o.text)}</p></div>
+      <p class="ask">Почему ты так решил(а)?</p><div class="choices">${rs}</div></article>`;
+  }
+  const likes = [["yes", "+", "Интересно"], ["maybe", "?", "Так себе"], ["no", "−", "Не моё"]].map(([v, m, t]) =>
+    `<button class="btn r-sim" data-go="path-like" data-v="${v}" aria-pressed="${r.liked === v}"><span class="r-mark">${m}</span>${t}</button>`).join("");
   const others = d.options.map((x, i) => i === r.pick ? "" : `<li><b>${esc(x.text)}</b> ${esc(x.outcome)} <small>(+${x.pts})</small></li>`).join("");
   const back = n >= 2 ? `<p class="recall"><b>Повторим приём дня ${n - 1}:</b> ${esc(PATH_DAYS[n - 2].rule)}. Где он пригодился бы тебе на этой неделе?</p>` : "";
   return `<article class="panel day" style="--c:${profColor(d.profession)}">${head}
@@ -657,6 +671,7 @@ function dayHTML(n) {
     <p class="gain">+${o.pts} к навыку «${esc(info.name)}»</p>
     <div class="rule"><span>Приём</span><b>${esc(d.rule)}</b><p>${esc(d.pro)}</p></div>
     <details class="others"><summary>А что было бы при других ответах?</summary><ul>${others}</ul></details>
+    <div class="like"><p class="ask">Как тебе эта сцена?</p><div class="choices row">${likes}</div></div>
     <p class="traits"><b>В этой профессии помогает:</b> ${esc(d.traits)}</p>
     ${back}
     <label class="own">Где этот приём пригодится тебе? <small>По желанию, видишь только ты</small>
@@ -809,6 +824,14 @@ slot.addEventListener("click", e => {
     case "path-pick":
       state.path.done[pathDay] = { pick: Number(btn.dataset.i), date: today() }; save();
       render();
+      break;
+    case "path-reason":
+      state.path.done[pathDay].reason = Number(btn.dataset.i); save();
+      render();
+      break;
+    case "path-like":
+      state.path.done[pathDay].liked = btn.dataset.v; save();
+      slot.querySelectorAll('[data-go="path-like"]').forEach(x => x.setAttribute("aria-pressed", String(x === btn)));
       break;
     case "path-profile": show("profile"); break;
     case "path-mission": show("mission"); break;
