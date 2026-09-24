@@ -579,3 +579,4 @@ body { overflow-x: clip; }
 .skills .bar-track { display: block; }
 .btn.mission-opt { font-weight: 400; }
 .btn.mission-opt b { font-weight: 700; }
+.like .ask { margin-bottom: 10px; }
