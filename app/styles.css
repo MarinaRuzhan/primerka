@@ -461,8 +461,20 @@ body { overflow-x: clip; }
 .try-now li { font-size: 16px; line-height: 1.4; }
 .sim-bar.no-counter { grid-template-columns: auto 1fr; }
 
-.poster { max-width: 430px; line-height: 0; }
-.poster svg { width: 100%; height: auto; display: block; }
+.sim-head { display: flex; flex-direction: column; gap: 20px; }
+.sim-intro { display: flex; flex-direction: column; gap: 12px; }
+.poster { line-height: 0; }
+/* Компьютер: картинка слева крупно, название и завязка справа */
+@media (min-width: 900px) {
+  .sim-head.has-cover {
+    display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-areas: "poster intro"; column-gap: 32px; align-items: center;
+  }
+  .sim-head.has-cover .poster { grid-area: poster; }
+  .sim-head.has-cover .sim-intro { grid-area: intro; }
+  .sim-head.has-cover .lead { font-size: 19px; }
+}
+.poster img { width: 100%; height: auto; display: block; border-radius: 22px; border: 2px solid var(--on-surface); }
 
 /* «Попробовать профессию» — в правом верхнем углу карточки, с пульсацией */
 .card { position: relative; }
