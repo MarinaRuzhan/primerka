@@ -5,33 +5,8 @@ const SIM_VET = {
   title: "Бублик не ест",
   role: "Ветеринар клиники «Лапа»",
   lead: "Кот не может рассказать, где болит. Придётся догадаться самому.",
-  art: `<svg viewBox="0 0 360 124" role="img" aria-label="Три кадра: кот отвернулся от миски, на снимке видна лента, кот снова ест">
-    <g fill="none" stroke="#121214" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="1.5" y="1.5" width="110" height="121" rx="18" fill="#F1F0EC"/>
-      <circle cx="46" cy="46" r="22"/>
-      <path d="M29 33 L27 15 L44 27M63 33 L65 15 L48 27"/>
-      <path d="M36 44q5 5 10 0M50 44q5 5 10 0"/>
-      <path d="M46 54l-4 5h8z" fill="#121214"/>
-      <path d="M62 96h34l-5 14H67z" fill="#FFA04D"/>
-      <path d="M58 96h42"/>
-      <path d="M70 72l16 16M86 72l-16 16" stroke="#FFA04D" stroke-width="4"/>
-
-      <rect x="125.5" y="1.5" width="110" height="121" rx="18" fill="#121214"/>
-      <rect x="143" y="20" width="75" height="72" rx="8" fill="#26262b" stroke="#F1F0EC"/>
-      <path d="M155 70c8-14 14 8 22-6s14 10 22-4" stroke="#FFA04D" stroke-width="4"/>
-      <circle cx="196" cy="86" r="18" stroke="#F1F0EC"/>
-      <path d="M209 99l10 10" stroke="#F1F0EC"/>
-
-      <rect x="249.5" y="1.5" width="110" height="121" rx="18" fill="#F1F0EC"/>
-      <circle cx="292" cy="44" r="22"/>
-      <path d="M275 31 L273 13 L290 25M309 31 L311 13 L294 25"/>
-      <path d="M282 44q5-6 10 0M296 44q5-6 10 0"/>
-      <path d="M292 52l-4 5h8z" fill="#121214"/>
-      <path d="M309 96h34l-5 14h-24z"/>
-      <path d="M305 96h42"/>
-      <path d="M330 30l4 8 8 4-8 4-4 8-4-8-8-4 8-4z" fill="#FFA04D" stroke="none"/>
-    </g>
-  </svg>`,
+  cover: "img/sim-vet.webp",
+  coverAlt: "Ветеринар прощупывает живот рыжему коту, рядом встревоженная хозяйка",
   askAs: "ветеринаром",
   start: { anger: 55, views: 0 },
   meter: { left: "Коту плохо", right: "Коту лучше" },

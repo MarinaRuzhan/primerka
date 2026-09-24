@@ -5,25 +5,8 @@ const SIM_DIRECTOR = {
   title: "Сцена под дождём",
   role: "Режиссёр короткометражки «Последний автобус»",
   lead: "Одна сцена, сорок человек в команде и солнце, которое сядет через пять часов.",
-  art: `<svg viewBox="0 0 360 124" role="img" aria-label="Три кадра: съёмка под дождём, хлопушка, зал аплодирует">
-    <g fill="none" stroke="#121214" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="1.5" y="1.5" width="110" height="121" rx="18" fill="#F1F0EC"/>
-      <path d="M30 58h34v26H30z"/><circle cx="47" cy="71" r="8"/>
-      <path d="M64 64l14-8v30l-14-8"/>
-      <path d="M40 92v12M56 92v12"/>
-      <path d="M34 26l-4 10M50 22l-4 12M66 26l-4 10M82 30l-4 10" stroke="#FF6B96" stroke-width="3.5"/>
-      <rect x="125.5" y="1.5" width="110" height="121" rx="18" fill="#121214"/>
-      <path d="M148 46h66v56h-66z" stroke="#F1F0EC"/>
-      <path d="M148 46l6-18 66-4-6 22z" stroke="#F1F0EC"/>
-      <path d="M170 26l-4 18M190 24l-4 18M210 22l-4 18" stroke="#F1F0EC"/>
-      <path d="M170 72h22" stroke="#FF6B96" stroke-width="4"/>
-      <rect x="249.5" y="1.5" width="110" height="121" rx="18" fill="#F1F0EC"/>
-      <rect x="266" y="18" width="78" height="46" rx="6"/>
-      <path d="M272 100V86a8 8 0 0 1 16 0v14M294 100V86a8 8 0 0 1 16 0v14M316 100V86a8 8 0 0 1 16 0v14"/>
-      <path d="M266 100h78"/>
-      <path d="M305 34l4 8 9 4-9 4-4 8-4-8-9-4 9-4z" fill="#FF6B96" stroke="none"/>
-    </g>
-  </svg>`,
+  cover: "img/sim-director.webp",
+  coverAlt: "Режиссёр смотрит дубль на мониторе, актриса стоит на остановке под искусственным дождём",
   askAs: "режиссёром",
   start: { anger: 50, views: 300 },
   meter: { left: "Сцена не получается", right: "Сцена живая" },

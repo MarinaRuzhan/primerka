@@ -5,27 +5,8 @@ const SIM_CHEF = {
   title: "Вечер пятницы",
   role: "Шеф-повар ресторана «Сойка»",
   lead: "Кухня — как игра на время. Только фигуры живые, и все смотрят на тебя.",
-  art: `<svg viewBox="0 0 360 124" role="img" aria-label="Три кадра: кастрюля на огне и часы, новое блюдо на тарелке, пустая тарелка со звёздочкой">
-    <g fill="none" stroke="#121214" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="1.5" y="1.5" width="110" height="121" rx="18" fill="#F1F0EC"/>
-      <path d="M28 60h46v26a8 8 0 0 1-8 8H36a8 8 0 0 1-8-8z"/>
-      <path d="M24 66h4M74 66h6"/>
-      <path d="M40 50c0-6 8-6 8-12M58 50c0-6 8-6 8-12"/>
-      <path d="M36 96c4 8 12 10 16 4s10-2 14 4" stroke="#F0442C" stroke-width="3.5"/>
-      <circle cx="84" cy="30" r="12"/><path d="M84 24v6l5 3"/>
-      <rect x="125.5" y="1.5" width="110" height="121" rx="18" fill="#121214"/>
-      <circle cx="181" cy="62" r="34" stroke="#F1F0EC"/>
-      <circle cx="181" cy="62" r="24" stroke="#F1F0EC" stroke-dasharray="3 6"/>
-      <path d="M168 66c6-10 14 6 22-6" stroke="#F0442C" stroke-width="5"/>
-      <circle cx="192" cy="54" r="3" fill="#F0442C" stroke="none"/>
-      <text x="181" y="108" font-size="10" font-weight="700" fill="#F1F0EC" text-anchor="middle" stroke="none" font-family="Golos Text, sans-serif">блюдо дня</text>
-      <rect x="249.5" y="1.5" width="110" height="121" rx="18" fill="#F1F0EC"/>
-      <circle cx="300" cy="62" r="30"/>
-      <path d="M338 40v44M334 40v12h8V40"/>
-      <path d="M274 40v18a6 6 0 0 0 12 0V40M280 58v26"/>
-      <path d="M312 26l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#F0442C" stroke="none"/>
-    </g>
-  </svg>`,
+  cover: "img/sim-chef.webp",
+  coverAlt: "Шеф-повар в час пик раздаёт указания на кухне ресторана",
   askAs: "шеф-поваром",
   start: { anger: 50, views: 6 },
   meter: { left: "Гости недовольны", right: "Гости довольны" },

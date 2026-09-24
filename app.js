@@ -546,10 +546,14 @@ function drawSim(dir) {
   const fresh = !slot.querySelector(".sim");
   if (fresh) {
     slot.innerHTML = `<article class="panel sim">
-      <p class="count">Пробник профессии</p>
-      <h1>${esc(sim.s.title)}</h1>
-      <p class="lead">${esc(sim.s.role)}. ${esc(sim.s.lead)}</p>
-      ${sim.s.art ? `<div class="poster">${sim.s.art}</div>` : ""}
+      <div class="sim-head${sim.s.cover ? " has-cover" : ""}">
+        <div class="sim-intro">
+          <p class="count">Пробник профессии</p>
+          <h1>${esc(sim.s.title)}</h1>
+          <p class="lead">${esc(sim.s.role)}. ${esc(sim.s.lead)}</p>
+        </div>
+        ${sim.s.cover ? `<div class="poster"><img src="${sim.s.cover}" alt="${esc(sim.s.coverAlt || "")}" width="1200" height="676"></div>` : ""}
+      </div>
       <div class="sim-bar-slot"></div>
       <ol class="chat"></ol>
       <div class="sim-controls"></div>
