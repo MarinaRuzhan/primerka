@@ -125,6 +125,7 @@ function introHTML() {
       <button class="btn primary" data-go="${quizDone() ? (state.gradesDone ? "result" : "grades") : "quiz"}">${quizDone() ? (state.gradesDone ? "Посмотреть мой результат" : "Продолжить") : started ? "Продолжить" : "Начать"}</button>
       <button class="btn ghost" data-go="deck-all">Просто посмотреть профессии</button>
     </div>
+    <button class="path-teaser" data-go="path"><b>Путь взросления</b><span>3 минуты в день: сцена из профессии, один выбор и приём, как у профи</span></button>
   </article>`;
 }
 
@@ -208,6 +209,7 @@ function resultHTML() {
     <div class="type-cards">${cards}</div>
     <div class="actions">
       <button class="btn primary" data-go="deck-match">Показать подходящие профессии</button>
+      <button class="btn ghost" data-go="path">Путь взросления: 3 минуты в день</button>
       <button class="btn ghost" data-go="restart">Пройти опрос заново</button>
     </div>
     <p class="attrib">Вопросы составлены по мотивам O*NET Mini Interest Profiler и адаптированы для подростков. ${esc(ATTRIBUTION)}</p>
@@ -331,6 +333,10 @@ function render(dir = "next") {
   if (view === "quiz") slot.innerHTML = quizHTML();
   if (view === "grades") slot.innerHTML = gradesHTML();
   if (view === "result") slot.innerHTML = resultHTML();
+  if (view === "path") slot.innerHTML = pathHTML();
+  if (view === "day") slot.innerHTML = dayHTML(pathDay);
+  if (view === "profile") slot.innerHTML = profileHTML();
+  if (view === "mission") slot.innerHTML = missionHTML();
   if (inDeck) slot.innerHTML = onSummary ? summaryHTML() : cardHTML(order[index]);
 
   slot.firstElementChild.classList.add(dir === "next" ? "enter-next" : "enter-prev");
@@ -570,6 +576,158 @@ function drawSim(dir) {
   else if (!fresh) window.scrollTo({ top: document.documentElement.scrollHeight, behavior: smooth ? "smooth" : "auto" });
 }
 
+/* ---------- Путь взросления ---------- */
+
+// Одна ситуация в день: следующая открывается на следующий календарный день.
+// ?all=1 в адресе открывает все дни сразу — для вычитки.
+const PATH_ALL = new URLSearchParams(location.search).has("all");
+if (!state.path) state.path = { done: {}, notes: {}, mission: null };
+let pathDay = 0;
+
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+const dayDone = n => state.path.done[n];
+function dayOpen(n) {
+  if (n === 0 || PATH_ALL) return true;
+  const prev = dayDone(n - 1);
+  return Boolean(prev && prev.date < today());
+}
+const daysDone = () => PATH_DAYS.filter((_, n) => dayDone(n)).length;
+const profColor = id => TYPES[PROFESSIONS.find(p => p.id === id).code[0]].color;
+
+function skillPoints() {
+  const pts = {};
+  PATH_DAYS.forEach((d, n) => {
+    const r = dayDone(n);
+    if (r) pts[d.skill] = (pts[d.skill] || 0) + d.options[r.pick].pts;
+  });
+  const m = state.path.mission;
+  if (m && m.finished && m.skill) pts[m.skill] = (pts[m.skill] || 0) + PATH_MISSION.pts;
+  return pts;
+}
+
+function pathHTML() {
+  const done = daysDone();
+  const items = PATH_DAYS.map((d, n) => {
+    const r = dayDone(n), open = dayOpen(n);
+    const status = r ? `+${d.options[r.pick].pts} · ${SKILL_INFO[d.skill].name}` : open ? "Можно сегодня" : "Откроется на следующий день";
+    return `<li><button class="path-day ${r ? "is-done" : open ? "is-open" : ""}" data-go="path-day" data-day="${n}" ${open ? "" : "disabled"} style="--c:${profColor(d.profession)}">
+      <span class="path-n">${r ? "✓" : n + 1}</span>
+      <span><b>${esc(d.role)}: ${esc(d.title)}</b><small>${esc(status)}</small></span>
+    </button></li>`;
+  }).join("");
+  const m = state.path.mission;
+  const mStatus = !m ? "Маленькое настоящее дело за неделю — по желанию" : m.finished ? "Выполнена · +30" : "Взята — отметь, когда сделаешь";
+  return `<article class="panel path">
+    <p class="count">Путь взросления</p>
+    <h1>3 минуты в день — и ты думаешь как профи</h1>
+    <p class="lead">Каждый день одна сцена из профессии и один выбор. Ошибиться нельзя: за любой ответ есть очки, а после — разбор, как поступил бы профессионал.</p>
+    <p class="week">Дней практики на этой неделе: <b>${done} из 7</b>. Неделя засчитана, если набралось 4 — пропуски не сгорают.</p>
+    <ol class="path-days">${items}</ol>
+    <button class="path-day mission-card ${m && m.finished ? "is-done" : "is-open"}" data-go="path-mission">
+      <span class="path-n">★</span><span><b>Миссия недели</b><small>${mStatus}</small></span>
+    </button>
+    <div class="actions">
+      <button class="btn primary" data-go="path-profile">Мои навыки</button>
+      <button class="btn ghost" data-go="intro">На главную</button>
+    </div>
+    <p class="note">Всё, что ты здесь отвечаешь, остаётся только на этом устройстве.</p>
+  </article>`;
+}
+
+function dayHTML(n) {
+  const d = PATH_DAYS[n], r = dayDone(n), info = SKILL_INFO[d.skill];
+  const head = `<p class="count">День ${n + 1} из 7 · ${esc(d.role)}</p>
+    <h1>${esc(d.title)}</h1>
+    <p class="skill-line"><b>Навык:</b> ${esc(info.name)} — в этой профессии важен на ${d.score} из 5</p>
+    <p class="scene">${esc(d.scene)}</p>`;
+  if (!r) {
+    const opts = d.options.map((o, i) => `<button class="btn choice" data-go="path-pick" data-i="${i}">${esc(o.text)}</button>`).join("");
+    return `<article class="panel day" style="--c:${profColor(d.profession)}">${head}
+      <p class="ask">${esc(d.ask)}</p><div class="choices">${opts}</div></article>`;
+  }
+  const o = d.options[r.pick];
+  const others = d.options.map((x, i) => i === r.pick ? "" : `<li><b>${esc(x.text)}</b> ${esc(x.outcome)} <small>(+${x.pts})</small></li>`).join("");
+  const back = n >= 2 ? `<p class="recall"><b>Повторим приём дня ${n - 1}:</b> ${esc(PATH_DAYS[n - 2].rule)}. Где он пригодился бы тебе на этой неделе?</p>` : "";
+  return `<article class="panel day" style="--c:${profColor(d.profession)}">${head}
+    <div class="picked"><span>Твой выбор</span><p>${esc(o.text)}</p></div>
+    <p class="outcome">${esc(o.outcome)}</p>
+    <p class="gain">+${o.pts} к навыку «${esc(info.name)}»</p>
+    <div class="rule"><span>Приём</span><b>${esc(d.rule)}</b><p>${esc(d.pro)}</p></div>
+    <details class="others"><summary>А что было бы при других ответах?</summary><ul>${others}</ul></details>
+    <p class="traits"><b>В этой профессии помогает:</b> ${esc(d.traits)}</p>
+    ${back}
+    <label class="own">Где этот приём пригодится тебе? <small>По желанию, видишь только ты</small>
+      <textarea data-note="${n}" rows="2" placeholder="Например: если с другом спорим, какой фильм смотреть, то…">${esc(state.path.notes[n] || "")}</textarea>
+    </label>
+    <div class="actions"><button class="btn primary" data-go="path">К пути</button></div>
+  </article>`;
+}
+
+function profileHTML() {
+  const pts = skillPoints();
+  const keys = Object.keys(pts);
+  const max = Math.max(40, ...Object.values(pts));
+  const rows = keys.length ? keys.sort((a, b) => pts[b] - pts[a]).map(k => `<li>
+      <div class="skill-row"><b>${esc(SKILL_INFO[k].name)}</b><span>${pts[k]}</span></div>
+      <span class="bar-track"><span class="bar-fill" style="width:${pts[k] / max * 100}%"></span></span>
+      <small>Особенно важен: ${esc(SKILL_INFO[k].where)}</small>
+    </li>`).join("") : `<li class="note">Пока пусто — пройди первую ситуацию дня.</li>`;
+  const traits = PATH_DAYS.filter((_, n) => dayDone(n)).map(d => `<li><b>${esc(d.role)}:</b> ${esc(d.traits)}</li>`).join("");
+  return `<article class="panel profile">
+    <p class="count">Путь взросления</p>
+    <h1>Мои навыки</h1>
+    <p class="lead">Очки за ситуации дня и миссии. Навыки взяты из американской базы профессий O*NET — это то, что реально нужно в работе.</p>
+    <ul class="skills">${rows}</ul>
+    ${traits ? `<h2>Что помогает в профессиях, которые ты попробовал</h2><p class="note">Это про профессии, а не про тебя: шкала от −3 (мешает) до +3 (сильно помогает).</p><ul class="traits-list">${traits}</ul>` : ""}
+    <div class="actions"><button class="btn primary" data-go="path">К пути</button></div>
+    <p class="note">Прогресс видишь только ты.</p>
+  </article>`;
+}
+
+function missionHTML() {
+  const m = state.path.mission;
+  if (!m) {
+    const opts = PATH_MISSION.options.map((o, i) => `<button class="btn choice mission-opt" data-go="mission-pick" data-m="${i}">
+      <b>${esc(o.title)}</b> <small>навык «${esc(SKILL_INFO[o.skill].name)}»</small><br>${esc(o.text)}</button>`).join("");
+    return `<article class="panel mission">
+      <p class="count">Миссия недели · по желанию</p>
+      <h1>Попробуй приём в жизни</h1>
+      <p class="lead">Выбери одну миссию. Сделать её можно дома или в одиночку, в любой день недели.</p>
+      <div class="choices">${opts}</div>
+      <div class="actions"><button class="btn ghost" data-go="path">Не сейчас</button></div>
+    </article>`;
+  }
+  const o = PATH_MISSION.options[m.pick];
+  if (!m.done) return `<article class="panel mission">
+      <p class="count">Миссия недели · ${esc(o.title)}</p>
+      <h1>${esc(o.title)}</h1>
+      <p class="lead">${esc(o.text)}</p>
+      <label class="own">Твой план одной строкой <small>По желанию</small>
+        <textarea data-plan rows="2" placeholder="Если…, то я…">${esc(m.plan || "")}</textarea>
+      </label>
+      <div class="actions">
+        <button class="btn primary" data-go="mission-done">Я сделал(а)</button>
+        <button class="btn ghost" data-go="mission-change">Выбрать другую</button>
+        <button class="btn ghost" data-go="path">К пути</button>
+      </div>
+    </article>`;
+  const qs = PATH_MISSION.questions.map((q, i) => `<label class="own">${esc(q)}
+      <textarea data-mq="${i}" rows="2" placeholder="Можно одним словом">${esc((m.answers || [])[i] || "")}</textarea></label>`).join("");
+  return `<article class="panel mission">
+    <p class="count">Миссия недели · ${esc(o.title)}</p>
+    <h1>${m.finished ? "Миссия выполнена" : "Как прошло?"}</h1>
+    ${m.finished ? `<p class="gain">+${PATH_MISSION.pts} к навыку «${esc(SKILL_INFO[o.skill].name)}»</p>` : `<p class="lead">Три вопроса — ответы видишь только ты. «Не получилось» — тоже результат.</p>`}
+    ${qs}
+    <div class="actions">
+      ${m.finished ? "" : `<button class="btn primary" data-go="mission-finish">Готово</button>`}
+      <button class="btn ghost" data-go="path">К пути</button>
+    </div>
+  </article>`;
+}
+
 /* ---------- Действия ---------- */
 
 slot.addEventListener("click", e => {
@@ -645,6 +803,22 @@ slot.addEventListener("click", e => {
       show("result");
       break;
     case "result": show("result", "prev"); break;
+    case "intro": show("intro", "prev"); break;
+    case "path": show("path", "prev"); break;
+    case "path-day": pathDay = Number(btn.dataset.day); show("day"); break;
+    case "path-pick":
+      state.path.done[pathDay] = { pick: Number(btn.dataset.i), date: today() }; save();
+      render();
+      break;
+    case "path-profile": show("profile"); break;
+    case "path-mission": show("mission"); break;
+    case "mission-pick":
+      state.path.mission = { pick: Number(btn.dataset.m), skill: PATH_MISSION.options[btn.dataset.m].skill }; save();
+      render();
+      break;
+    case "mission-change": state.path.mission = null; save(); render("prev"); break;
+    case "mission-done": state.path.mission.done = true; save(); render(); break;
+    case "mission-finish": state.path.mission.finished = true; save(); render(); break;
     case "grades": show("grades"); break;
     case "deck-match": openDeck(true); break;
     case "deck-all": openDeck(false); break;
@@ -654,6 +828,15 @@ slot.addEventListener("click", e => {
       page = 0; show("quiz", "prev");
       break;
   }
+});
+
+slot.addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.note !== undefined) state.path.notes[t.dataset.note] = t.value;
+  else if (t.dataset.plan !== undefined) state.path.mission.plan = t.value;
+  else if (t.dataset.mq !== undefined) (state.path.mission.answers ||= [])[t.dataset.mq] = t.value;
+  else return;
+  save();
 });
 
 reactBar.addEventListener("click", e => {
