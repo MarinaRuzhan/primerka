@@ -402,8 +402,10 @@ function applyFx(fx = {}) {
 
 function pushMessages(msgs, done) {
   sim.busy = true;
+  const mine = sim; // если за это время открыли другой пробник — старые реплики не досылаем
   let i = 0;
   const next = () => {
+    if (sim !== mine) return;
     if (i >= msgs.length) { sim.busy = false; drawSim(); done && done(); return; }
     sim.log.push(msgs[i++]);
     drawSim();
@@ -544,8 +546,20 @@ function simEndHTML() {
       <button class="btn ghost" data-go="sim-again">Попробовать ещё раз</button>
       <button class="btn ghost" data-go="sim-exit">Вернуться к карточке</button>
     </div>
-    <p class="note" id="more-note" hidden>Записали! Скоро здесь появятся другие профессии. Расскажи, какую хочешь попробовать следующей.</p>
+    <div class="more-sims" id="more-sims" hidden>
+      <span class="label">Выбери следующую</span>
+      <div class="choices">${otherSims().map(o => `<button class="btn choice" data-go="sim-pick" data-sim="${o.id}"><b>${esc(o.name)}</b> — «${esc(SIMS[o.id].title)}»${state.reactions[o.id] ? " · уже пробовал(а)" : ""}</button>`).join("")}</div>
+    </div>
   </div>`;
+}
+
+// Остальные пробники: сначала непройденные, внутри — в порядке совпадения с интересами
+function otherSims() {
+  const ids = order.map(p => p.id).concat(PROFESSIONS.map(p => p.id));
+  const seen = new Set();
+  return ids.filter(id => SIMS[id] && id !== sim.s.profession && !seen.has(id) && seen.add(id))
+    .map(id => PROFESSIONS.find(p => p.id === id))
+    .sort((a, b) => !!state.reactions[a.id] - !!state.reactions[b.id]);
 }
 
 function drawSim(dir) {
@@ -554,7 +568,7 @@ function drawSim(dir) {
     slot.innerHTML = `<article class="panel sim">
       <div class="sim-head${sim.s.cover ? " has-cover" : ""}">
         <div class="sim-intro">
-          <p class="count">Пробник профессии</p>
+          <p class="count">Пробник профессии · ${esc(PROFESSIONS.find(p => p.id === sim.s.profession)?.name || "")}</p>
           <h1>${esc(sim.s.title)}</h1>
           <p class="lead">${esc(sim.s.role)}. ${esc(sim.s.lead)}</p>
         </div>
@@ -790,11 +804,20 @@ slot.addEventListener("click", e => {
     case "sim": startSim(btn.dataset.sim); break;
     case "sim-next": nextStep(); break;
     case "sim-again": startSim(sim.s.id); break;
-    case "sim-more":
-      state.wantMore = true; save();
-      slot.querySelector("#more-note").hidden = false;
+    case "sim-more": {
+      const list = slot.querySelector("#more-sims");
+      list.hidden = false;
       btn.disabled = true;
+      list.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
       break;
+    }
+    case "sim-pick": {
+      const back = sim.back;
+      startSim(btn.dataset.sim);
+      const i = order.findIndex(p => p.id === btn.dataset.sim);
+      sim.back = i >= 0 ? { view: "deck", index: i } : back;
+      break;
+    }
     case "sim-exit":
       view = sim.back.view === "sim" ? "deck" : sim.back.view;
       index = sim.back.index;
