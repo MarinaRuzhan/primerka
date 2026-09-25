@@ -463,6 +463,8 @@ body { overflow-x: clip; }
 
 .sim-head { display: flex; flex-direction: column; gap: 20px; }
 .sim-intro { display: flex; flex-direction: column; gap: 12px; }
+/* Длинные слова в названии («возвращаются») переносятся, а не вылезают за край */
+.sim-intro h1 { hyphens: auto; overflow-wrap: break-word; }
 .poster { line-height: 0; }
 /* Компьютер: картинка слева крупно, название и завязка справа */
 @media (min-width: 900px) {
@@ -473,6 +475,7 @@ body { overflow-x: clip; }
   .sim-head.has-cover .poster { grid-area: poster; }
   .sim-head.has-cover .sim-intro { grid-area: intro; }
   .sim-head.has-cover .lead { font-size: 19px; }
+  .sim-head.has-cover h1 { font-size: 34px; }
 }
 .poster img { width: 100%; height: auto; display: block; border-radius: 22px; border: 2px solid var(--on-surface); }
 
