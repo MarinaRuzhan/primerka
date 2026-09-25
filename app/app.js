@@ -184,14 +184,18 @@ function introHTML() {
 
 function quizHTML() {
   const q = QUESTIONS[page], v = state.answers[q.n], last = page === QUESTIONS.length - 1;
-  const opts = SCALE.map((label, k) =>
-    `<button class="btn choice answer" data-go="quiz-answer" data-v="${k + 1}" aria-pressed="${v === k + 1}">${label}</button>`).join("");
+  const dots = SCALE.map((label, k) =>
+    `<button class="dot d${k + 1}" role="radio" aria-checked="${v === k + 1}" aria-label="${label}" data-go="quiz-answer" data-v="${k + 1}"></button>`).join("");
   return `<article class="panel quiz">
     <p class="count">Вопрос ${page + 1} из ${QUESTIONS.length}</p>
     <p class="ask-lead">Тебе понравилось бы…</p>
     <h1 class="q-one">${esc(q.q)}</h1>
     ${page === 0 ? `<p class="hint">Представь, что это твоя работа. Не думай, сложно ли этому учиться и сколько платят, — только нравилось бы тебе этим заниматься или нет.</p>` : ""}
-    <div class="choices answers" role="radiogroup" aria-label="${esc(q.q)}">${opts}</div>
+    <div class="scale" role="radiogroup" aria-label="${esc(q.q)}">
+      <span class="pole-l">${SCALE[0]}</span>
+      <span class="dots-row">${dots}</span>
+      <span class="pole-r">${SCALE[4]}</span>
+    </div>
     <div class="actions">
       <button class="btn ghost" data-go="quiz-back">Назад</button>
       ${v ? `<button class="btn primary" data-go="quiz-next">${last ? "Готово" : "Дальше"}</button>` : ""}
@@ -1161,7 +1165,7 @@ slot.addEventListener("click", e => {
     case "quiz-answer": {
       state.answers[QUESTIONS[page].n] = Number(btn.dataset.v);
       save();
-      slot.querySelectorAll('[data-go="quiz-answer"]').forEach(x => x.setAttribute("aria-pressed", String(x === btn)));
+      slot.querySelectorAll('[data-go="quiz-answer"]').forEach(x => x.setAttribute("aria-checked", String(x === btn)));
       const at = page;
       // короткая пауза, чтобы было видно выбранный ответ, — и следующий вопрос
       setTimeout(() => { if (view === "quiz" && page === at) nextQuestion(); }, 250);
