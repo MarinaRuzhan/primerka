@@ -586,3 +586,24 @@ body { overflow-x: clip; }
 
 /* Список других пробников в конце истории */
 .more-sims { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+
+/* Маршрут навыка */
+.path h2.step-title { margin: 8px 0 -4px; font: 800 18px/1.2 var(--display); }
+.versus { display: grid; gap: 10px; }
+@media (min-width: 700px) { .versus { grid-template-columns: 1fr 1fr; } }
+.versus > div { border: 2px solid var(--line); border-radius: 18px; padding: 12px 16px; }
+.versus > div.pro { border-color: var(--on-surface); }
+.versus span, .loop .label, .own-line .label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; opacity: .7; }
+.versus p { margin: 6px 0 0; line-height: 1.45; }
+.versus .then { opacity: .75; }
+.talk { display: flex; flex-direction: column; gap: 10px; }
+.talk .say { margin: 0; font-size: 17px; line-height: 1.5; }
+.talk .reply { align-self: flex-start; max-width: 85%; margin: 0; background: var(--line); border-radius: 4px 18px 18px 18px; padding: 10px 14px; }
+.talk .note { margin: 0; }
+.own-line, .loop { display: flex; flex-direction: column; gap: 10px; border: 2px solid var(--on-surface); border-radius: 18px; padding: 14px 16px; }
+.own-line p, .loop p { margin: 0; line-height: 1.5; }
+.loop { background: var(--c, #FFD43B); color: var(--ink); border-color: var(--ink); }
+.loop .btn { align-self: flex-start; }
+.btn.check { display: flex; align-items: center; gap: 10px; }
+.btn.check .r-mark { flex: none; width: 24px; height: 24px; border: 2px solid currentColor; border-radius: 6px; display: grid; place-items: center; }
+.day h2 { margin: 0; font: 800 22px/1.2 var(--display); }
