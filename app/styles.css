@@ -583,3 +583,6 @@ body { overflow-x: clip; }
 .btn.mission-opt { font-weight: 400; }
 .btn.mission-opt b { font-weight: 700; }
 .like .ask { margin-bottom: 10px; }
+
+/* Список других пробников в конце истории */
+.more-sims { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
