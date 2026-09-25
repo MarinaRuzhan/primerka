@@ -190,13 +190,15 @@ function quizHTML() {
   return `<article class="panel quiz">
     <p class="count">Вопрос ${page + 1} из ${QUESTIONS.length}</p>
     <p class="ask-lead">Тебе понравилось бы…</p>
-    <h1 class="q-one">${esc(q.q)}</h1>
-    ${page === 0 ? `<p class="hint">Представь, что это твоя работа. Не думай, сложно ли этому учиться и сколько платят, — только нравилось бы тебе этим заниматься или нет.</p>` : ""}
+    <div class="q-stack">${QUESTIONS.map((x, k) => k === page
+      ? `<h1 class="q-one">${esc(x.q)}</h1>`
+      : `<p class="q-one" aria-hidden="true">${esc(x.q)}</p>`).join("")}</div>
     <div class="scale" role="radiogroup" aria-label="${esc(q.q)}">
       <span class="pole-l">${SCALE[0]}</span>
       <span class="dots-row">${dots}</span>
       <span class="pole-r">${SCALE[4]}</span>
     </div>
+    ${page === 0 ? `<p class="hint">Представь, что это твоя работа. Не думай, сложно ли этому учиться и сколько платят, — только нравилось бы тебе этим заниматься или нет.</p>` : ""}
     <div class="actions">
       <button class="btn ghost" data-go="quiz-back">Назад</button>
       ${v ? `<button class="btn primary" data-go="quiz-next">${last ? "Готово" : "Дальше"}</button>` : ""}
