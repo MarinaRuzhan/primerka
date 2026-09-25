@@ -40,7 +40,7 @@ const POLES = [
 const PER_PAGE = 5;
 const PAGES = Math.ceil(QUESTIONS.length / PER_PAGE);
 const MAX_SCORE = 5 * (QUESTIONS.length / TYPE_ORDER.length);
-const TOP_N = 8;
+const TOP_N = 7;
 const GRADE_OPTIONS = ["2", "3", "4", "5", "—"];
 
 const ATTRIBUTION = "This page includes information from the O*NET Career Exploration Tools by the U.S. Department of Labor, Employment and Training Administration (USDOL/ETA). Used under the O*NET Tools Developer License. O*NET® is a trademark of USDOL/ETA. Marina Polyakova has modified all or some of this information. USDOL/ETA has not approved, endorsed, or tested these modifications.";
@@ -110,22 +110,79 @@ function matchLabel(m) {
 
 /* ---------- Экраны ---------- */
 
+function steps() {
+  const j = state.journey, n = j ? j.list.length : TOP_N, done = n - jLeft().length;
+  const rt = state.path.skill && ROUTES[state.path.skill];
+  const lessons = rt ? rt.lessons.filter((_, i) => lessonFin(i)).length : 0;
+  return [
+    { title: "Опрос и оценки", done: quizDone() && state.gradesDone,
+      status: quizDone() ? "Пройдено" : answeredCount() ? `Отвечено ${answeredCount()} из ${QUESTIONS.length}` : "30 вопросов, 5–7 минут" },
+    { title: `Твои ${n} профессий`, done: Boolean(j),
+      status: j ? `Подходят твоим интересам: ${leaders(scores(), 2).map(t => TYPES[t].name).join(" и ")}` : "Подберём по опросу" },
+    { title: "Примерь каждую", done: skillsOpen(),
+      status: j ? `Примерено ${done} из ${n}` : "Пробник и отметка: откликается или нет" },
+    { title: "Навыки твоих профессий", done: Boolean(state.path.skill),
+      status: state.path.skill ? `Выбран: ${SKILL_INFO[state.path.skill].name}` : skillsOpen() ? "Открыто — выбери первый навык" : `Откроется, когда примеришь все ${n}` },
+    { title: "Прокачка навыка", done: Boolean(rt && lessons === rt.lessons.length),
+      status: rt ? `Занятий ${lessons} из ${rt.lessons.length}` : "10 занятий, по одному в день" }
+  ];
+}
+
+// Что делать дальше — одна кнопка на главной
+function nextAction() {
+  if (!quizDone()) return { go: "quiz", label: answeredCount() ? "Продолжить опрос" : "Начать" };
+  if (!state.gradesDone) return { go: "grades", label: "Продолжить: оценки" };
+  if (!state.journey) return { go: "result", label: "Посмотреть мой результат" };
+  checkUnlock(); // профессии могли быть примерены ещё до того, как их собрали в список
+  const left = jLeft();
+  if (!skillsOpen() || (left.length && !route())) {
+    const p = left[0];
+    return { go: "journey-open", id: p.id, label: `Дальше: ${p.name}${SIMS[p.id] && !simDone(p.id) ? " — пробник" : ""}` };
+  }
+  if (!state.path.skill) return { go: "path", label: "Выбрать навык" };
+  const i = route().lessons.findIndex((_, k) => !lessonFin(k));
+  if (i >= 0) return lessonOpen(i)
+    ? { go: "lesson", i, label: `Занятие ${i + 1}: ${lessonData(i).title}` }
+    : { go: "path", label: "Следующее занятие откроется завтра", wait: true };
+  if (left.length) return { go: "journey-open", id: left[0].id, label: `Дальше: ${left[0].name}` };
+  const id = loopSim();
+  if (!simDone(id)) return { go: "sim", sim: id, loop: true, label: `Новая профессия: ${profName(id)}` };
+  return { go: "path-skills", label: "Выбрать следующий навык" };
+}
+
 function introHTML() {
-  const started = answeredCount() > 0 && !quizDone();
+  const st = steps(), cur = st.findIndex(x => !x.done), a = nextAction();
+  const n = st.length, left = jLeft().length;
+  const hints = [
+    "Отвечай, как чувствуешь: правильных ответов нет.",
+    `Посмотри результат — и мы покажем ${TOP_N} профессий, которые подходят тебе больше всего.`,
+    `Осталось примерить ${left} из ${jList().length}. В каждой — пробник на 5–10 минут и отметка, откликается ли профессия. Когда примеришь все, откроются навыки.`,
+    "Все профессии примерены — навыки открыты! Выбери, с какого начать.",
+    "Одно занятие в день, 5–7 минут: сцена из профессии и приём, как у профи."
+  ];
+  const fresh = !answeredCount();
+  const items = st.map((x, k) => {
+    const cls = x.done ? "is-done" : k === cur ? "is-open" : "is-locked";
+    return `<li class="path-day ${cls}"><span class="path-n">${x.done ? "✓" : k + 1}</span>
+      <span><b>${esc(x.title)}</b><small>${esc(x.status)}</small></span></li>`;
+  }).join("");
+  const attrs = `data-go="${a.go}"${a.id ? ` data-id="${a.id}"` : ""}${a.i !== undefined ? ` data-i="${a.i}"` : ""}${a.sim ? ` data-sim="${a.sim}"` : ""}${a.loop ? " data-loop" : ""}`;
+  const links = [
+    `<button class="link" data-go="deck-all">Все ${PROFESSIONS.length} профессий</button>`,
+    state.journey ? `<button class="link" data-go="result">Мой результат</button>` : "",
+    skillsOpen() ? `<button class="link" data-go="path-profile">Мои навыки</button>` : "",
+    quizDone() ? `<button class="link" data-go="restart">Пройти опрос заново</button>` : ""
+  ].join("");
   return `<article class="panel intro">
-    <h1>Кем тебе может быть интересно стать?</h1>
-    <p class="lead">Ответь на 30 коротких вопросов о том, чем тебе нравилось бы заниматься. Потом покажем, какие профессии тебе подходят, и расскажем о них по-человечески.</p>
-    <ol class="steps">
-      <li><b>30 вопросов</b><span>минут 5–7</span></li>
-      <li><b>Оценки по предметам</b><span>по желанию</span></li>
-      <li><b>Твой результат</b><span>и профессии под него</span></li>
-    </ol>
-    <p class="note">Здесь нет правильных и неправильных ответов. Ответы остаются только на этом устройстве и никуда не отправляются.</p>
-    <div class="actions">
-      <button class="btn primary" data-go="${quizDone() ? (state.gradesDone ? "result" : "grades") : "quiz"}">${quizDone() ? (state.gradesDone ? "Посмотреть мой результат" : "Продолжить") : started ? "Продолжить" : "Начать"}</button>
-      <button class="btn ghost" data-go="deck-all">Просто посмотреть профессии</button>
-    </div>
-    <button class="path-teaser" data-go="path"><b>Путь взросления</b><span>5 минут в день: навык, который нужен в твоих профессиях, — сцены из работы и приёмы профи</span></button>
+    ${fresh ? `<h1>Кем тебе может быть интересно стать?</h1>
+      <p class="lead">Пять шагов: опрос → ${TOP_N} подходящих профессий → попробуй каждую → навыки, которые в них нужны → прокачка.</p>`
+    : `<p class="count">Твой путь · ${cur < 0 ? "пройден" : `шаг ${cur + 1} из ${n}`}</p>
+      <h1>${cur < 0 ? "Путь пройден" : esc(st[cur].title)}</h1>
+      <p class="lead">${cur < 0 ? "Навык прокачан. Выбери следующий — или примерь новую профессию." : hints[cur]}</p>`}
+    <ol class="path-days journey-track">${items}</ol>
+    <div class="actions"><button class="btn ${a.wait ? "ghost" : "primary"}" ${attrs}>${esc(a.label)}</button></div>
+    <div class="links">${links}</div>
+    <p class="note">Здесь нет правильных и неправильных ответов. Всё остаётся только на этом устройстве и никуда не отправляется.</p>
   </article>`;
 }
 
@@ -208,8 +265,8 @@ function resultHTML() {
     ${low}
     <div class="type-cards">${cards}</div>
     <div class="actions">
-      <button class="btn primary" data-go="deck-match">Показать подходящие профессии</button>
-      <button class="btn ghost" data-go="path">Путь взросления: 5 минут в день</button>
+      <button class="btn primary" data-go="journey-start">${state.journey ? "Продолжить примерку" : `Показать мои ${TOP_N} профессий`}</button>
+      <button class="btn ghost" data-go="intro">Мой путь</button>
       <button class="btn ghost" data-go="restart">Пройти опрос заново</button>
     </div>
     <p class="attrib">Вопросы составлены по мотивам O*NET Mini Interest Profiler и адаптированы для подростков. ${esc(ATTRIBUTION)}</p>
@@ -244,8 +301,9 @@ function cardHTML(p) {
   const m = quizDone() ? `<p class="match">Совпадение с твоими интересами: <b>${matchLabel(match(p, scores()))}</b></p>` : "";
 
   const sim = SIMS[p.id];
-  return `<article class="card" style="--c:${color}">
-    ${sim ? `<button class="btn try" data-go="sim" data-sim="${p.id}">
+  const cta = journeyMode && state.journey.list.includes(p.id);
+  return `<article class="card${cta ? " has-cta" : ""}" style="--c:${color}">
+    ${cta ? journeyCardHTML(p) : sim ? `<button class="btn try" data-go="sim" data-sim="${p.id}">
       <span class="try-play" aria-hidden="true"></span>
       <span><b>Попробовать профессию</b><small>история на 5 минут</small></span>
     </button>` : ""}
@@ -288,7 +346,49 @@ function cardHTML(p) {
   </article>`;
 }
 
+// Подсказка на карточке: что сделать с этой профессией, чтобы продвинуться
+function journeyCardHTML(p) {
+  const k = order.indexOf(p) + 1, n = order.length;
+  const head = `<span class="label">Шаг 3 · профессия ${k} из ${n}</span>`;
+  if (profDone(p.id)) {
+    const left = jLeft().length;
+    return `<div class="journey-cta is-done">${head}
+      <p>Отмечено: <b>${REACT_LABEL[state.reactions[p.id]]}</b>. ${left ? `Осталось примерить ${left}.` : "Все профессии примерены — навыки открыты!"}</p>
+      <button class="btn primary" data-go="journey-next">${left ? "Дальше" : "К навыкам"}</button></div>`;
+  }
+  if (SIMS[p.id]) return `<div class="journey-cta">${head}
+      <p>Сначала пройди пробник — побудь в этой профессии 5–10 минут. В конце отметишь, откликается ли она.</p>
+      <button class="btn primary" data-go="sim" data-sim="${p.id}">Пройти пробник «${esc(SIMS[p.id].title)}»</button></div>`;
+  return `<div class="journey-cta">${head}
+      <p>Пробник для этой профессии пока готовится. Прочитай карточку и отметь внизу: интересно, не знаю или не моё.</p></div>`;
+}
+
+// Шаг 3 целиком: семь профессий и что осталось
+function journeyHubHTML() {
+  const list = jList(), left = jLeft();
+  const items = list.map((p, k) => {
+    const done = profDone(p.id);
+    const status = done ? REACT_LABEL[state.reactions[p.id]]
+      : SIMS[p.id] ? (simDone(p.id) ? "Пробник пройден — осталось отметить" : `Пробник «${SIMS[p.id].title}»`)
+      : "Карточка — пробник пока готовится";
+    return `<li><button class="path-day ${done ? "is-done" : left[0] === p ? "is-open" : ""}" data-go="journey-open" data-id="${p.id}" style="--c:${TYPES[p.code[0]].color}">
+      <span class="path-n">${done ? "✓" : k + 1}</span>
+      <span><b>${esc(p.name)}</b><small>${esc(status)}</small></span></button></li>`;
+  }).join("");
+  return `<article class="panel summary">
+    <p class="count">Шаг 3 из 5 · Примерка</p>
+    <h1>${left.length ? `Примерено ${list.length - left.length} из ${list.length}` : "Все профессии примерены!"}</h1>
+    <p class="lead">${left.length ? `Осталось ${left.length}. Когда примеришь все, откроются навыки, которые нужны в твоих профессиях.` : "Навыки открыты: посмотри, какие нужны в профессиях, которые тебе откликнулись."}</p>
+    <ol class="path-days">${items}</ol>
+    <div class="actions">
+      ${left.length ? `<button class="btn primary" data-go="journey-open" data-id="${left[0].id}">Дальше: ${esc(left[0].name)}</button>` : `<button class="btn primary" data-go="path">К навыкам</button>`}
+      <button class="btn ghost" data-go="intro">Мой путь</button>
+    </div>
+  </article>`;
+}
+
 function summaryHTML() {
+  if (journeyMode) return journeyHubHTML();
   const chip = p => `<li style="--c:${TYPES[p.code[0]].color}">${esc(p.name)}</li>`;
   const group = (key, title) => {
     const items = order.filter(p => state.reactions[p.id] === key);
@@ -353,7 +453,7 @@ function render(dir = "next") {
   prevBtn.hidden = nextBtn.hidden = !inDeck;
   prevBtn.disabled = index === 0;
   nextBtn.disabled = onSummary;
-  reactBar.hidden = !inDeck || onSummary;
+  reactBar.hidden = !inDeck || onSummary || (journeyMode && SIMS[order[index].id] && !simDone(order[index].id));
   if (inDeck && !onSummary) {
     const current = state.reactions[order[index].id];
     reactBar.querySelectorAll(".r").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.r === current)));
@@ -366,7 +466,39 @@ function render(dir = "next") {
 
 function show(v, dir) { view = v; render(dir); }
 
+/* ---------- Маршрут подростка ----------
+   1 опрос и оценки → 2 семь подходящих профессий → 3 пробник каждой и отметка
+   → 4 навыки, общие для профессий «Интересно» и «Не знаю» (открываются, только когда примерены все) → 5 прокачка навыка */
+let journeyMode = false;
+const simDone = id => Boolean(state.sims && state.sims[id]);
+// Профессия примерена: есть отметка, а если есть пробник — он пройден
+const profDone = id => Boolean(state.reactions[id]) && (!SIMS[id] || simDone(id));
+const jList = () => state.journey ? state.journey.list.map(id => PROFESSIONS.find(p => p.id === id)) : [];
+const jLeft = () => jList().filter(p => !profDone(p.id));
+const skillsOpen = () => Boolean(state.skillsOpen); // однажды открытые навыки не закрываются, даже если пройти опрос заново
+const REACT_LABEL = { yes: "Интересно", maybe: "Не знаю", no: "Не моё" };
+
+function startJourney() {
+  const s = scores();
+  const list = PROFESSIONS.slice().sort((a, b) => match(b, s) - match(a, s)).slice(0, TOP_N).map(p => p.id);
+  state.journey = { list };
+  save();
+  checkUnlock();
+}
+function checkUnlock() {
+  if (state.journey && !state.skillsOpen && !jLeft().length) { state.skillsOpen = true; save(); }
+}
+function openJourney(id) {
+  if (!state.journey) startJourney();
+  order = jList();
+  journeyMode = true;
+  const left = jLeft();
+  index = order.findIndex(p => p.id === (id || (left[0] || order[0]).id));
+  show("deck");
+}
+
 function openDeck(sorted) {
+  journeyMode = false;
   order = PROFESSIONS.slice();
   if (sorted && quizDone()) {
     const s = scores();
@@ -412,7 +544,7 @@ function pushMessages(msgs, done) {
   const mine = sim; // если за это время открыли другой пробник — старые реплики не досылаем
   let i = 0;
   const next = () => {
-    if (sim !== mine) return;
+    if (sim !== mine || view !== "sim") return; // ушли с пробника — старые реплики не досылаем
     if (i >= msgs.length) { sim.busy = false; drawSim(); done && done(); return; }
     sim.log.push(msgs[i++]);
     drawSim();
@@ -539,6 +671,7 @@ function simEndHTML() {
     return `<li><span>${k.name}</span><span class="dots">${Array.from({ length: 5 }, (_, i) => `<i class="${i < filled ? "on" : ""}"></i>`).join("")}</span></li>`;
   }).join("");
   const cur = state.reactions[s.profession];
+  const inJourney = Boolean(state.journey && state.journey.list.includes(s.profession));
   const btn = (r, mark, label) => `<button class="btn r-sim" data-simr="${r}" aria-pressed="${cur === r}"><span class="r-mark">${mark}</span>${label}</button>`;
   return `<div class="sim-end">
     <h2>${esc(sim.end.title)}</h2>
@@ -548,8 +681,9 @@ function simEndHTML() {
     ${s.tryNow ? `<div class="try-now"><span class="label">Попробуй уже сейчас</span><ul>${s.tryNow.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>` : ""}
     <p class="ask">Понравилось быть ${esc(s.askAs || "на этом месте")}?</p>
     <div class="choices row">${btn("yes", "+", "Интересно")}${btn("maybe", "?", "Не знаю")}${btn("no", "−", "Не моё")}</div>
+    ${inJourney ? `<p class="note">${(() => { const l = jLeft().filter(x => x.id !== s.profession).length; return l ? `Отметь, откликается ли профессия, — и дальше. Осталось примерить: ${l}.` : "Отметь, откликается ли профессия, — и откроются навыки."; })()}</p>` : ""}
     <div class="actions">
-      <button class="btn primary" data-go="sim-more">Попробовать другую профессию</button>
+      ${inJourney ? `<button class="btn primary" data-go="journey-next">Дальше</button>` : `<button class="btn primary" data-go="sim-more">Попробовать другую профессию</button>`}
       <button class="btn ghost" data-go="sim-again">Попробовать ещё раз</button>
       <button class="btn ghost" data-go="sim-exit">Вернуться к карточке</button>
     </div>
@@ -619,6 +753,10 @@ const lcFirst = t => t.charAt(0).toLowerCase() + t.slice(1);
 
 // Профессии подростка: отмеченные «Интересно»; если таких нет — пять лучших по опросу
 function myProfessions() {
+  const tried = jList();
+  const warm = tried.filter(p => ["yes", "maybe"].includes(state.reactions[p.id]));
+  if (warm.length) return { list: warm, why: "которые ты отметил(а) «Интересно» или «Не знаю»" };
+  if (tried.length) return { list: tried, why: "которые ты примерил(а)" };
   const liked = PROFESSIONS.filter(p => state.reactions[p.id] === "yes");
   if (liked.length) return { list: liked, why: "которые тебе понравились" };
   if (quizDone()) {
@@ -695,7 +833,21 @@ function skillPoints() {
 }
 
 function pathHTML() {
+  if (!skillsOpen() && !PATH_ALL) return lockedHTML();
   return state.path.skill ? routeHTML() : skillsHTML();
+}
+
+function lockedHTML() {
+  const left = jLeft();
+  return `<article class="panel path">
+    <p class="count">Шаг 4 из 5 · Навыки</p>
+    <h1>Навыки откроются после примерки</h1>
+    <p class="lead">${state.journey ? `Осталось примерить ${left.length} из ${jList().length}. Когда попробуешь все профессии, здесь появятся навыки, которые в них нужны.` : "Сначала пройди опрос и примерь подходящие профессии — навыки подберутся под них."}</p>
+    <div class="actions">
+      ${state.journey && left.length ? `<button class="btn primary" data-go="journey-open" data-id="${left[0].id}">Дальше: ${esc(left[0].name)}</button>` : ""}
+      <button class="btn ${state.journey && left.length ? "ghost" : "primary"}" data-go="intro">Мой путь</button>
+    </div>
+  </article>`;
 }
 
 function skillsHTML() {
@@ -721,7 +873,7 @@ function skillsHTML() {
     <div class="actions">
       ${state.path.skill ? `<button class="btn primary" data-go="path">К моему навыку</button>` : ""}
       <button class="btn ${state.path.skill ? "ghost" : "primary"}" data-go="path-profile">Мои навыки</button>
-      <button class="btn ghost" data-go="intro">На главную</button>
+      <button class="btn ghost" data-go="intro">Мой путь</button>
     </div>
     <p class="note">Навыки и их важность — из американской базы профессий O*NET. Всё, что ты здесь отвечаешь, остаётся только на этом устройстве.</p>
   </article>`;
@@ -773,7 +925,7 @@ function routeHTML() {
     <div class="actions">
       <button class="btn primary" data-go="path-profile">Мои навыки</button>
       <button class="btn ghost" data-go="path-skills">Другие навыки</button>
-      <button class="btn ghost" data-go="intro">На главную</button>
+      <button class="btn ghost" data-go="intro">Мой путь</button>
     </div>
     <p class="note">Всё, что ты здесь отвечаешь, остаётся только на этом устройстве.</p>
   </article>`;
@@ -789,7 +941,7 @@ function loopHTML() {
   return `<div class="loop">
     <span class="label">Что дальше</span>
     <p>${good} Посмотри, как этот навык работает в настоящей работе: ${esc(profName(id))} — пробник «${esc(SIMS[id].title)}».</p>
-    <button class="btn primary" data-go="sim" data-sim="${id}">Попробовать профессию</button>
+    <button class="btn primary" data-go="sim" data-sim="${id}" data-loop>Попробовать профессию</button>
   </div>`;
 }
 
@@ -1038,6 +1190,7 @@ slot.addEventListener("click", e => {
   if (simR) {
     state.reactions[sim.s.profession] = simR.dataset.simr;
     save();
+    checkUnlock();
     slot.querySelectorAll("[data-simr]").forEach(x => x.setAttribute("aria-pressed", String(x === simR)));
     return;
   }
@@ -1045,7 +1198,27 @@ slot.addEventListener("click", e => {
   const btn = e.target.closest("[data-go]");
   if (!btn) return;
   switch (btn.dataset.go) {
-    case "sim": startSim(btn.dataset.sim); break;
+    case "sim":
+      // пробник-продолжение после навыка добавляется к примерке
+      if (btn.dataset.loop !== undefined && state.journey && !state.journey.list.includes(btn.dataset.sim)) { state.journey.list.push(btn.dataset.sim); save(); }
+      startSim(btn.dataset.sim);
+      break;
+    case "journey-start": openJourney(); break;
+    case "journey-open": openJourney(btn.dataset.id); break;
+    case "journey-next": {
+      if (view === "sim" && !state.reactions[sim.s.profession]) {
+        const ask = slot.querySelector(".sim-end .ask");
+        ask.textContent = "Сначала отметь: откликается ли профессия?";
+        ask.scrollIntoView({ block: "center" });
+        break;
+      }
+      const was = skillsOpen();
+      checkUnlock();
+      if (!was && skillsOpen()) { show("intro"); break; }
+      const left = jLeft();
+      if (left.length) openJourney(left[0].id); else show("intro");
+      break;
+    }
     case "sim-next": nextStep(); break;
     case "sim-again": startSim(sim.s.id); break;
     case "sim-more": {
@@ -1140,11 +1313,12 @@ slot.addEventListener("click", e => {
     case "mission-done": state.path.mission.done = true; save(); render(); break;
     case "mission-finish": state.path.mission.finished = true; save(); render(); break;
     case "grades": show("grades"); break;
-    case "deck-match": openDeck(true); break;
     case "deck-all": openDeck(false); break;
     case "deck-restart": index = 0; render("prev"); break;
     case "restart":
-      state.answers = {}; state.grades = {}; state.gradesDone = false; save();
+      state.answers = {}; state.grades = {}; state.gradesDone = false;
+      state.journey = null;
+      save();
       page = 0; show("quiz", "prev");
       break;
   }
@@ -1168,6 +1342,7 @@ reactBar.addEventListener("click", e => {
   if (!b) return;
   state.reactions[order[index].id] = b.dataset.r;
   save();
+  checkUnlock();
   reactBar.querySelectorAll(".r").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
   setTimeout(() => go(1), 220);
 });
