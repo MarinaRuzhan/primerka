@@ -37,8 +37,6 @@ const POLES = [
   { key: "pace", l: "Тихо", r: "Движуха" }
 ];
 
-const PER_PAGE = 5;
-const PAGES = Math.ceil(QUESTIONS.length / PER_PAGE);
 const MAX_SCORE = 5 * (QUESTIONS.length / TYPE_ORDER.length);
 const TOP_N = 7;
 const GRADE_OPTIONS = ["2", "3", "4", "5", "—"];
@@ -51,7 +49,7 @@ const state = Object.assign({ answers: {}, grades: {}, reactions: {}, gradesDone
 
 // Где сейчас человек: intro | quiz | grades | result | deck
 let view = "intro";
-let page = 0;
+let page = 0; // номер вопроса: один вопрос на экран
 let index = 0;
 let order = PROFESSIONS.slice();
 
@@ -72,7 +70,6 @@ function save() {
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const answeredCount = () => QUESTIONS.filter(q => state.answers[q.n]).length;
 const quizDone = () => answeredCount() === QUESTIONS.length;
-const pageItems = () => QUESTIONS.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
 
 /* ---------- Подсчёт ---------- */
 
@@ -116,7 +113,7 @@ function steps() {
   const lessons = rt ? rt.lessons.filter((_, i) => lessonFin(i)).length : 0;
   return [
     { title: "Опрос и оценки", done: quizDone() && state.gradesDone,
-      status: quizDone() ? "Пройдено" : answeredCount() ? `Отвечено ${answeredCount()} из ${QUESTIONS.length}` : "30 вопросов, 5–7 минут" },
+      status: quizDone() ? (state.gradesDone ? "Пройдено" : "Вопросы готовы — осталось указать оценки, это по желанию") : answeredCount() ? `Отвечено ${answeredCount()} из ${QUESTIONS.length}` : "30 вопросов, 5–7 минут" },
     { title: `Твои ${n} профессий`, done: Boolean(j),
       status: j ? `Подходят твоим интересам: ${leaders(scores(), 2).map(t => TYPES[t].name).join(" и ")}` : "Подберём по опросу" },
     { title: "Примерь каждую", done: skillsOpen(),
@@ -186,32 +183,19 @@ function introHTML() {
 }
 
 function quizHTML() {
-  const items = pageItems();
-  const from = page * PER_PAGE + 1, to = from + items.length - 1;
-  const list = items.map(q => {
-    const v = state.answers[q.n];
-    const dots = SCALE.map((label, i) =>
-      `<button class="dot d${i + 1}" role="radio" aria-checked="${v === i + 1}" aria-label="${label}" data-q="${q.n}" data-v="${i + 1}"></button>`).join("");
-    return `<li class="item ${v ? "done" : ""}" id="q${q.n}">
-      <p class="q">${esc(q.q)}</p>
-      <div class="scale" role="radiogroup" aria-label="${esc(q.q)}">
-        <span class="pole-l">${SCALE[0]}</span>
-        <span class="dots-row">${dots}</span>
-        <span class="pole-r">${SCALE[4]}</span>
-      </div>
-    </li>`;
-  }).join("");
-  const ready = items.every(q => state.answers[q.n]);
+  const q = QUESTIONS[page], v = state.answers[q.n], last = page === QUESTIONS.length - 1;
+  const opts = SCALE.map((label, k) =>
+    `<button class="btn choice answer" data-go="quiz-answer" data-v="${k + 1}" aria-pressed="${v === k + 1}">${label}</button>`).join("");
   return `<article class="panel quiz">
-    <p class="count">Вопросы ${from}–${to} из ${QUESTIONS.length}</p>
-    <h1>Тебе понравилось бы…</h1>
-    <p class="hint">Представь, что это твоя работа. Не думай, сложно ли этому учиться и сколько платят, — только нравилось бы тебе этим заниматься или нет.</p>
-    <ol class="items">${list}</ol>
+    <p class="count">Вопрос ${page + 1} из ${QUESTIONS.length}</p>
+    <p class="ask-lead">Тебе понравилось бы…</p>
+    <h1 class="q-one">${esc(q.q)}</h1>
+    ${page === 0 ? `<p class="hint">Представь, что это твоя работа. Не думай, сложно ли этому учиться и сколько платят, — только нравилось бы тебе этим заниматься или нет.</p>` : ""}
+    <div class="choices answers" role="radiogroup" aria-label="${esc(q.q)}">${opts}</div>
     <div class="actions">
       <button class="btn ghost" data-go="quiz-back">Назад</button>
-      <button class="btn primary" data-go="quiz-next" ${ready ? "" : "disabled"}>${page === PAGES - 1 ? "Готово" : "Дальше"}</button>
+      ${v ? `<button class="btn primary" data-go="quiz-next">${last ? "Готово" : "Дальше"}</button>` : ""}
     </div>
-    <p class="need" ${ready ? "hidden" : ""}>Ответь на все пять, чтобы идти дальше</p>
   </article>`;
 }
 
@@ -393,6 +377,7 @@ function summaryHTML() {
 /* ---------- Отрисовка ---------- */
 
 function setProgress(total, current) {
+  progress.classList.toggle("many", total > 12); // 30 вопросов — полоски потоньше, чтобы влезли на телефоне
   progress.innerHTML = Array.from({ length: total }, (_, i) =>
     `<span class="${i < current ? "done" : i === current ? "now" : ""}"></span>`).join("");
 }
@@ -423,7 +408,7 @@ function render(dir = "next") {
   // "stay" — шаг внутри занятия: без анимации и без прыжка наверх
   if (dir !== "stay") slot.firstElementChild.classList.add(dir === "next" ? "enter-next" : "enter-prev");
 
-  if (view === "quiz") setProgress(PAGES, page);
+  if (view === "quiz") setProgress(QUESTIONS.length, page);
   else if (inDeck) setProgress(order.length, index);
   else progress.innerHTML = "";
 
@@ -440,6 +425,11 @@ function render(dir = "next") {
     const last = [...slot.querySelectorAll(".ask, .gain")].pop();
     if (last) last.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   } else window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+function nextQuestion() {
+  if (page < QUESTIONS.length - 1) { page++; render(); }
+  else show(state.gradesDone ? "result" : "grades");
 }
 
 function show(v, dir) { view = v; render(dir); }
@@ -1109,25 +1099,6 @@ function missionHTML() {
 /* ---------- Действия ---------- */
 
 slot.addEventListener("click", e => {
-  const dot = e.target.closest(".dot");
-  if (dot) {
-    state.answers[dot.dataset.q] = Number(dot.dataset.v);
-    save();
-    const item = dot.closest(".item");
-    item.classList.add("done");
-    item.querySelectorAll(".dot").forEach(d => d.setAttribute("aria-checked", String(d === dot)));
-    const items = pageItems();
-    const ready = items.every(q => state.answers[q.n]);
-    slot.querySelector('[data-go="quiz-next"]').disabled = !ready;
-    slot.querySelector(".need").hidden = ready;
-    const nextOpen = items.find(q => !state.answers[q.n]);
-    if (nextOpen) {
-      const smooth = !matchMedia("(prefers-reduced-motion: reduce)").matches;
-      document.getElementById("q" + nextOpen.n).scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "center" });
-    }
-    return;
-  }
-
   const g = e.target.closest(".g");
   if (g) {
     state.grades[g.dataset.sub] = g.dataset.g;
@@ -1180,17 +1151,23 @@ slot.addEventListener("click", e => {
       render("prev");
       break;
     case "quiz":
-      page = Math.min(Math.floor(answeredCount() / PER_PAGE), PAGES - 1);
+      page = Math.max(0, QUESTIONS.findIndex(q => !state.answers[q.n]));
       show("quiz");
       break;
     case "quiz-back":
       if (page === 0) show("intro", "prev");
       else { page--; render("prev"); }
       break;
-    case "quiz-next":
-      if (page < PAGES - 1) { page++; render(); }
-      else show(state.gradesDone ? "result" : "grades");
+    case "quiz-answer": {
+      state.answers[QUESTIONS[page].n] = Number(btn.dataset.v);
+      save();
+      slot.querySelectorAll('[data-go="quiz-answer"]').forEach(x => x.setAttribute("aria-pressed", String(x === btn)));
+      const at = page;
+      // короткая пауза, чтобы было видно выбранный ответ, — и следующий вопрос
+      setTimeout(() => { if (view === "quiz" && page === at) nextQuestion(); }, 250);
       break;
+    }
+    case "quiz-next": nextQuestion(); break;
     case "grades-skip":
     case "grades-done":
       state.gradesDone = true; save();
