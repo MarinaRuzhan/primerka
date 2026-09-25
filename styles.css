@@ -607,3 +607,19 @@ body { overflow-x: clip; }
 .btn.check { display: flex; align-items: center; gap: 10px; }
 .btn.check .r-mark { flex: none; width: 24px; height: 24px; border: 2px solid currentColor; border-radius: 6px; display: grid; place-items: center; }
 .day h2 { margin: 0; font: 800 22px/1.2 var(--display); }
+
+/* Маршрут подростка: трекер на главной и подсказки на карточках */
+.path-day.is-locked { opacity: .45; }
+.journey-track .path-day { cursor: default; }
+.links { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.btn.link, .link { background: none; border: 0; padding: 0; min-height: 0; font: inherit; font-size: 15px; color: inherit; text-decoration: underline; text-underline-offset: 3px; opacity: .75; cursor: pointer; }
+.link:hover { opacity: 1; }
+.journey-cta { display: flex; flex-direction: column; gap: 10px; border: 2px solid var(--ink); border-radius: 18px; padding: 14px 16px; background: #FFD43B; color: var(--ink); }
+.journey-cta.is-done { background: transparent; color: inherit; border-color: var(--on-surface); }
+.journey-cta .label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; opacity: .7; }
+.journey-cta p { margin: 0; line-height: 1.45; }
+.journey-cta .btn { align-self: flex-start; }
+@media (min-width: 1000px) {
+  .card.has-cta { grid-template-areas: "cta cta" "head pair" "scales fit" "scales school" "more more"; }
+  .card .journey-cta { grid-area: cta; }
+}
