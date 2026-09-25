@@ -168,7 +168,6 @@ function introHTML() {
   }).join("");
   const attrs = `data-go="${a.go}"${a.id ? ` data-id="${a.id}"` : ""}${a.i !== undefined ? ` data-i="${a.i}"` : ""}${a.sim ? ` data-sim="${a.sim}"` : ""}${a.loop ? " data-loop" : ""}`;
   const links = [
-    `<button class="link" data-go="deck-all">Все ${PROFESSIONS.length} профессий</button>`,
     state.journey ? `<button class="link" data-go="result">Мой результат</button>` : "",
     skillsOpen() ? `<button class="link" data-go="path-profile">Мои навыки</button>` : "",
     quizDone() ? `<button class="link" data-go="restart">Пройти опрос заново</button>` : ""
@@ -388,28 +387,7 @@ function journeyHubHTML() {
 }
 
 function summaryHTML() {
-  if (journeyMode) return journeyHubHTML();
-  const chip = p => `<li style="--c:${TYPES[p.code[0]].color}">${esc(p.name)}</li>`;
-  const group = (key, title) => {
-    const items = order.filter(p => state.reactions[p.id] === key);
-    const body = items.length ? `<ul>${items.map(chip).join("")}</ul>` : `<p class="none">Пока ничего</p>`;
-    return `<div class="group"><h2>${title}</h2>${body}</div>`;
-  };
-  const skipped = order.filter(p => !state.reactions[p.id]);
-  return `<article class="panel summary">
-    <h1>Вот что откликнулось</h1>
-    ${order.length < PROFESSIONS.length ? `<p class="note">Мы показали ${order.length} профессий, которые больше всего совпадают с твоими интересами. Всего в каталоге — ${PROFESSIONS.length}.</p>` : ""}
-    <p class="lead">Это не приговор и не экзамен — просто первая примерка. Обсудите вместе, что зацепило и почему.</p>
-    ${group("yes", "Интересно")}
-    ${group("maybe", "Не знаю")}
-    ${group("no", "Не моё")}
-    ${skipped.length ? `<div class="group"><h2>Пропущено</h2><ul>${skipped.map(chip).join("")}</ul></div>` : ""}
-    <div class="actions">
-      <button class="btn ghost" data-go="deck-restart">Посмотреть профессии ещё раз</button>
-      ${order.length < PROFESSIONS.length ? `<button class="btn ghost" data-go="deck-all">Все профессии (${PROFESSIONS.length})</button>` : ""}
-      ${quizDone() ? `<button class="btn ghost" data-go="result">Мой результат</button>` : `<button class="btn primary" data-go="quiz">Пройти опрос</button>`}
-    </div>
-  </article>`;
+  return journeyHubHTML();
 }
 
 /* ---------- Отрисовка ---------- */
@@ -494,18 +472,6 @@ function openJourney(id) {
   journeyMode = true;
   const left = jLeft();
   index = order.findIndex(p => p.id === (id || (left[0] || order[0]).id));
-  show("deck");
-}
-
-function openDeck(sorted) {
-  journeyMode = false;
-  order = PROFESSIONS.slice();
-  if (sorted && quizDone()) {
-    const s = scores();
-    order.sort((a, b) => match(b, s) - match(a, s));
-    order = order.slice(0, TOP_N);
-  }
-  index = 0;
   show("deck");
 }
 
@@ -683,24 +649,11 @@ function simEndHTML() {
     <div class="choices row">${btn("yes", "+", "Интересно")}${btn("maybe", "?", "Не знаю")}${btn("no", "−", "Не моё")}</div>
     ${inJourney ? `<p class="note">${(() => { const l = jLeft().filter(x => x.id !== s.profession).length; return l ? `Отметь, откликается ли профессия, — и дальше. Осталось примерить: ${l}.` : "Отметь, откликается ли профессия, — и откроются навыки."; })()}</p>` : ""}
     <div class="actions">
-      ${inJourney ? `<button class="btn primary" data-go="journey-next">Дальше</button>` : `<button class="btn primary" data-go="sim-more">Попробовать другую профессию</button>`}
+      ${inJourney ? `<button class="btn primary" data-go="journey-next">Дальше</button>` : `<button class="btn primary" data-go="intro">Мой путь</button>`}
       <button class="btn ghost" data-go="sim-again">Попробовать ещё раз</button>
       <button class="btn ghost" data-go="sim-exit">Вернуться к карточке</button>
     </div>
-    <div class="more-sims" id="more-sims" hidden>
-      <span class="label">Выбери следующую</span>
-      <div class="choices">${otherSims().map(o => `<button class="btn choice" data-go="sim-pick" data-sim="${o.id}"><b>${esc(o.name)}</b> — «${esc(SIMS[o.id].title)}»${state.reactions[o.id] ? " · уже пробовал(а)" : ""}</button>`).join("")}</div>
-    </div>
   </div>`;
-}
-
-// Остальные пробники: сначала непройденные, внутри — в порядке совпадения с интересами
-function otherSims() {
-  const ids = order.map(p => p.id).concat(PROFESSIONS.map(p => p.id));
-  const seen = new Set();
-  return ids.filter(id => SIMS[id] && id !== sim.s.profession && !seen.has(id) && seen.add(id))
-    .map(id => PROFESSIONS.find(p => p.id === id))
-    .sort((a, b) => !!state.reactions[a.id] - !!state.reactions[b.id]);
 }
 
 function drawSim(dir) {
@@ -1221,20 +1174,6 @@ slot.addEventListener("click", e => {
     }
     case "sim-next": nextStep(); break;
     case "sim-again": startSim(sim.s.id); break;
-    case "sim-more": {
-      const list = slot.querySelector("#more-sims");
-      list.hidden = false;
-      btn.disabled = true;
-      list.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
-      break;
-    }
-    case "sim-pick": {
-      const back = sim.back;
-      startSim(btn.dataset.sim);
-      const i = order.findIndex(p => p.id === btn.dataset.sim);
-      sim.back = i >= 0 ? { view: "deck", index: i } : back;
-      break;
-    }
     case "sim-exit":
       view = sim.back.view === "sim" ? "deck" : sim.back.view;
       index = sim.back.index;
@@ -1313,8 +1252,6 @@ slot.addEventListener("click", e => {
     case "mission-done": state.path.mission.done = true; save(); render(); break;
     case "mission-finish": state.path.mission.finished = true; save(); render(); break;
     case "grades": show("grades"); break;
-    case "deck-all": openDeck(false); break;
-    case "deck-restart": index = 0; render("prev"); break;
     case "restart":
       state.answers = {}; state.grades = {}; state.gradesDone = false;
       state.journey = null;

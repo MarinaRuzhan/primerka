@@ -1,6 +1,6 @@
 // Хранит файлы приложения на устройстве, чтобы оно открывалось без интернета.
 // При изменении файлов поднять номер версии — иначе останется старая копия.
-const CACHE = "primerka-v27";
+const CACHE = "primerka-v28";
 const FILES = ["./", "index.html", "styles.css", "app.js", "data.js", "data-more.js", "sim-pr.js", "sim-vet.js", "sim-chef.js", "sim-screenwriter.js", "sim-director.js", "sim-lawyer.js", "sim-event.js", "sim-teacher.js", "sim-ux.js", "sim-startup.js", "path.js", "skill-perceptive.js", "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png", "img/sim-vet.webp", "img/sim-pr.webp", "img/sim-chef.webp", "img/sim-screenwriter.webp", "img/sim-director.webp", "img/sim-lawyer.webp", "img/sim-event.webp", "img/sim-teacher.webp", "img/sim-ux.webp", "img/sim-startup.webp"];
 
 self.addEventListener("install", e => {
