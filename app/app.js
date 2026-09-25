@@ -167,7 +167,8 @@ function introHTML() {
   const links = [
     state.journey ? `<button class="link" data-go="result">Мой результат</button>` : "",
     skillsOpen() ? `<button class="link" data-go="path-profile">Мои навыки</button>` : "",
-    quizDone() ? `<button class="link" data-go="restart">Пройти опрос заново</button>` : ""
+    // опрос заново — только после примерки всех профессий, чтобы не переотвечать «под нужную профессию»
+    skillsOpen() ? `<button class="link" data-go="restart">Пройти опрос заново</button>` : ""
   ].join("");
   return `<article class="panel intro">
     ${fresh ? `<h1>Кем тебе может быть интересно стать?</h1>
@@ -253,8 +254,7 @@ function resultHTML() {
     <div class="type-cards">${cards}</div>
     <div class="actions">
       <button class="btn primary" data-go="journey-start">${state.journey ? "Продолжить примерку" : `Показать мои ${TOP_N} профессий`}</button>
-      <button class="btn ghost" data-go="intro">Мой путь</button>
-      <button class="btn ghost" data-go="restart">Пройти опрос заново</button>
+      ${state.journey ? `<button class="btn ghost" data-go="intro">Мой путь</button>` : ""}
     </div>
     <p class="attrib">Вопросы составлены по мотивам O*NET Mini Interest Profiler и адаптированы для подростков. ${esc(ATTRIBUTION)}</p>
   </article>`;
